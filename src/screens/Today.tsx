@@ -4,6 +4,7 @@ import GG from '../lib/logic';
 import type { State, Todo } from '../lib/logic';
 import { useApp } from '../app-context';
 import { IconBtn, fmtDate, onEnter } from '../ui';
+import WorkPicker from '../WorkPicker';
 
 const DOWS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
@@ -81,13 +82,7 @@ export default function Today() {
           <div className="mk-add">
             <input className="gg-input" id="new-todo" type="text" ref={input} placeholder={isToday ? 'Hôm nay bạn muốn làm gì?' : 'Thêm việc cho ngày này'} aria-label="Việc mới" maxLength={300}
               value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onEnter(add)} />
-            <select className="mk-select" id="new-todo-work" aria-label="Thuộc công việc" value={workId} onChange={(e) => setPicked(e.target.value)}>
-              {st.projects.filter((p) => p.works.length).map((p) => (
-                <optgroup label={p.name} key={p.id}>
-                  {p.works.slice().sort((a, b) => a.order - b.order).map((w) => <option value={w.id} key={w.id}>{w.name}</option>)}
-                </optgroup>
-              ))}
-            </select>
+            <WorkPicker id="new-todo-work" projects={st.projects} value={workId} onChange={setPicked} />
             <IconBtn name="plus" label="Thêm việc" id="add-todo" cls="gg-btn--water" onClick={add} />
           </div>
         )}

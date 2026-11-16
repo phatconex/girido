@@ -13,7 +13,7 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 .mk-far { fill: var(--mk-far); }
 .mk-mid { fill: var(--mk-mid); }
 .mk-pine { fill: var(--tree-dark); opacity: calc(0.45 * var(--mk-dim)); }
-.mk-field { fill: var(--blush); opacity: calc(0.5 * var(--mk-dim)); }
+.mk-meadow { fill: var(--tree-light); opacity: 0.6; }
 .mk-bank { fill: var(--hill); }
 .mk-near { fill: var(--ground); }
 .mk-shoreline { fill: none; stroke: var(--mk-shore); stroke-width: 9; stroke-linecap: round; opacity: 0.55; }
@@ -80,7 +80,32 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 .mk-mini::after { display: none; }
 .mk-add { display: flex; gap: var(--space-2); align-items: center; }
 .mk-add .gg-input { flex: 1 1 200px; }
-.mk-select { flex: 0 1 190px; min-width: 0; height: 52px; padding: 0 var(--space-2); border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); font: 700 14px/20px var(--font-body); }
+/* ô chọn công việc có tìm kiếm */
+.mk-pick { position: relative; flex: 0 1 220px; min-width: 0; }
+.mk-pick__btn { display: flex; align-items: center; gap: var(--space-2); width: 100%; height: 52px; padding: 0 var(--space-2) 0 var(--space-3); border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+.mk-pick__btn:hover { border-color: var(--water-500); }
+.mk-pick__btn:focus-visible, .mk-pick.is-open .mk-pick__btn { outline: none; border-color: var(--water-600); box-shadow: 0 0 0 3px var(--water-100); }
+.mk-pick__text { display: grid; flex: 1; min-width: 0; }
+.mk-pick__text small { overflow: hidden; font: 800 11px/14px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; text-overflow: ellipsis; }
+.mk-pick__text b { overflow: hidden; font: 700 14px/18px var(--font-body); white-space: nowrap; text-overflow: ellipsis; }
+.mk-pick svg, .mk-pick__pop svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.mk-pick__chev { color: var(--ink-soft); transition: transform var(--dur-fast) var(--ease-out); }
+.mk-pick.is-open .mk-pick__chev { transform: rotate(180deg); }
+.mk-pick__pop { position: fixed; z-index: 60; border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-card); overflow: hidden; animation: mk-pick-in var(--dur-fast) var(--ease-out); }
+@keyframes mk-pick-in { from { opacity: 0; transform: translateY(-4px); } }
+.mk-pick__search { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 2px solid var(--line); color: var(--ink-soft); }
+.mk-pick__search input { flex: 1; min-width: 0; height: 32px; border: 0; outline: none; background: none; color: var(--ink); font: 600 15px/20px var(--font-body); }
+.mk-pick__search input::placeholder { color: var(--ink-soft); }
+.mk-pick__list { max-height: min(264px, var(--mk-pick-max, 264px)); padding: var(--space-1); overflow-y: auto; overscroll-behavior: contain; }
+.mk-pick__group { margin: 0; padding: var(--space-2) var(--space-2) 4px; font: 800 11px/14px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+.mk-pick__opt { display: flex; align-items: center; gap: var(--space-2); min-height: 40px; padding: 6px var(--space-2); border-radius: var(--radius-sm); color: var(--ink); font: 600 15px/20px var(--font-body); cursor: pointer; }
+.mk-pick__opt span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.mk-pick__opt svg { color: var(--water-600); }
+.mk-pick__opt[data-active="true"] { background: var(--water-100); }
+.mk-pick__opt[aria-selected="true"] { font-weight: 800; }
+.mk-pick__empty { margin: 0; padding: var(--space-3) var(--space-2); color: var(--ink-soft); font: 600 14px/20px var(--font-body); }
+@media (max-width: 560px) { .mk-pick { flex-basis: 150px; } }
+@media (prefers-reduced-motion: reduce) { .mk-pick__pop { animation: none; } .mk-pick__chev { transition: none; } }
 .mk-group { margin: 0; font: 800 13px/16px var(--font-body); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
 .mk-group span { color: var(--ink-soft); }
 /* việc là một dòng trên tờ giấy, không phải một thẻ riêng */

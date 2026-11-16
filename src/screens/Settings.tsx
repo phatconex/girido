@@ -1,4 +1,4 @@
-// Màn hình Cài đặt: nơi lưu dữ liệu, tài khoản, xuất và nhập JSON.
+// Màn hình Cài đặt: nơi lưu dữ liệu, tài khoản. Xuất và nhập JSON chỉ hiện ở chế độ lưu trên máy; khi đã lưu lên Supabase thì không cần.
 import { useRef, useState, type ChangeEvent } from 'react';
 import GG from '../lib/logic';
 import { useApp } from '../app-context';
@@ -60,6 +60,7 @@ export default function Settings() {
         </section>
       )}
 
+      {!cloud && <>
       <section className="mk-sec">
         <p className="mk-group">Sao lưu</p>
         <p className="gg-muted">Tải toàn bộ project, việc, cây và cảm xúc về máy thành một file JSON.</p>
@@ -72,6 +73,7 @@ export default function Settings() {
         <input type="file" id="import-file" ref={file} accept="application/json,.json" aria-label="Chọn file JSON để nhập" onChange={importJson} />
         <p className="mk-error" id="import-error" role="alert">{error}</p>
       </section>
+      </>}
     </>
   );
 }
