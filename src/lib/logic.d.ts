@@ -1,6 +1,7 @@
 export interface Work { id: string; name: string; order: number }
 export interface Project { id: string; name: string; createdAt: string; works: Work[] }
-export interface Todo { id: string; workId: string; text: string; date: string; done: boolean; doneAt: string | null }
+/** `workId` rỗng nghĩa là việc lẻ, không thuộc project nào. `pomos`: số pomodoro đã xong cho việc này. */
+export interface Todo { id: string; workId: string; text: string; date: string; done: boolean; doneAt: string | null; pomos?: number }
 export interface Day { kind?: string; planted?: boolean; mood?: number }
 export interface State { projects: Project[]; todos: Todo[]; days: Record<string, Day> }
 export interface Progress { total: number; done: number; pct: number }
@@ -45,6 +46,7 @@ declare const GG: {
   updateTodo(st: State, id: string, patch: { text?: string; date?: string; workId?: string }): State;
   toggleTodo(st: State, id: string, nowIso: string): State;
   deleteTodo(st: State, id: string): State;
+  addPomo(st: State, id: string): State;
   overdue(st: State, today: string): Todo[];
   carryOver(st: State, ids: string[], today: string): State;
   workStats(st: State, workId: string): { total: number; done: number; status: 'done' | 'now' | 'new' };

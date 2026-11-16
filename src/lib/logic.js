@@ -126,9 +126,11 @@ const GG = {};
     var next = mapProject(st, f.project.id, function (p) { return assign(p, { works: p.works.filter(function (w) { return w.id !== id; }) }); });
     return withState(next, { todos: dropTodosOfWorks(st, [id]) });
   };
+  /* Việc lẻ: việc không thuộc project nào, workId là chuỗi rỗng. Ngoài chuyện đó nó giống mọi việc khác:
+     có ngày, tick được, trễ thì mang sang hôm nay được, và cũng tính vào việc của ngày. */
   GG.addTodo = function (st, t) {
     var text = clean(t && t.text);
-    if (!t || !text || !GG.isDate(t.date) || !GG.findWork(st, t.workId)) return st;
+    if (!t || !text || !GG.isDate(t.date) || (t.workId !== '' && !GG.findWork(st, t.workId))) return st;
     return withState(st, { todos: st.todos.concat([{ id: GG.newId('t'), workId: t.workId, text: text, date: t.date, done: false, doneAt: null }]) });
   };
   function mapTodo(st, id, fn) {
@@ -139,10 +141,12 @@ const GG = {};
     var p = {};
     if ('text' in patch) { p.text = clean(patch.text); if (!p.text) return st; }
     if ('date' in patch) { if (!GG.isDate(patch.date)) return st; p.date = patch.date; }
-    if ('workId' in patch) { if (!GG.findWork(st, patch.workId)) return st; p.workId = patch.workId; }
+    if ('workId' in patch) { if (patch.workId !== '' && !GG.findWork(st, patch.workId)) return st; p.workId = patch.workId; }
     return mapTodo(st, id, function (t) { return assign(t, p); });
   };
   GG.toggleTodo = function (st, id, nowIso) { return mapTodo(st, id, function (t) { return assign(t, { done: !t.done, doneAt: t.done ? null : nowIso }); }); };
+  /* Ghi thêm một pomodoro đã xong cho một việc. */
+  GG.addPomo = function (st, id) { return mapTodo(st, id, function (t) { return assign(t, { pomos: (t.pomos || 0) + 1 }); }); };
   GG.deleteTodo = function (st, id) { var todos = st.todos.filter(function (t) { return t.id !== id; }); return todos.length === st.todos.length ? st : withState(st, { todos: todos }); };
   GG.overdue = function (st, today) {
     return st.todos.filter(function (t) { return !t.done && t.date < today; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
@@ -198,11 +202,14 @@ const GG = {};
       if (!isObj(t) || !str(t.id) || !str(t.text)) return fail('Việc thứ ' + (i + 1) + ' thiếu id hoặc nội dung.');
       if (ids[t.id]) return fail('Trùng id "' + t.id + '" ở việc thứ ' + (i + 1) + '.');
       ids[t.id] = 1;
-      if (!workIds[t.workId]) return fail('Việc thứ ' + (i + 1) + ' trỏ tới công việc "' + t.workId + '" không có trong file.');
+      if (t.workId !== '' && !workIds[t.workId]) return fail('Việc thứ ' + (i + 1) + ' trỏ tới công việc "' + t.workId + '" không có trong file.');
       if (!GG.isDate(t.date)) return fail('Việc thứ ' + (i + 1) + ' có ngày sai dạng (cần YYYY-MM-DD).');
       if (typeof t.done !== 'boolean') return fail('Việc thứ ' + (i + 1) + ' có "done" không phải true hoặc false.');
       if (t.doneAt != null && typeof t.doneAt !== 'string') return fail('Việc thứ ' + (i + 1) + ' có "doneAt" sai dạng.');
-      todos.push({ id: t.id, workId: t.workId, text: t.text.trim(), date: t.date, done: t.done, doneAt: t.doneAt == null ? null : t.doneAt });
+      if (t.pomos != null && !(typeof t.pomos === 'number' && t.pomos === Math.floor(t.pomos) && t.pomos >= 0)) return fail('Việc thứ ' + (i + 1) + ' có số pomodoro sai dạng.');
+      out = { id: t.id, workId: t.workId, text: t.text.trim(), date: t.date, done: t.done, doneAt: t.doneAt == null ? null : t.doneAt };
+      if (t.pomos) out.pomos = t.pomos;
+      todos.push(out);
     }
     for (key in o.days) {
       d = o.days[key];

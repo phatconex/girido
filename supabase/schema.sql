@@ -28,11 +28,12 @@ create table if not exists public.works (
 create table if not exists public.todos (
   user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
   id         text        not null,
-  work_id    text        not null,
+  work_id    text,                    -- null: việc lẻ, không thuộc project nào
   text       text        not null check (length(trim(text)) > 0),
   date       date        not null,
   done       boolean     not null default false,
   done_at    timestamptz,
+  pomos      integer     not null default 0 check (pomos >= 0),
   pos        integer     not null default 0,
   created_at timestamptz not null default now(),
   primary key (user_id, id),
@@ -48,6 +49,10 @@ create table if not exists public.days (
   mood    smallint check (mood between 1 and 5),
   primary key (user_id, date)
 );
+
+-- Project đã tạo bảng từ bản trước thì chỉnh ở đây.
+alter table public.todos add column if not exists pomos integer not null default 0 check (pomos >= 0);
+alter table public.todos alter column work_id drop not null;
 
 create index if not exists works_project_idx on public.works (user_id, project_id);
 create index if not exists todos_work_idx    on public.todos (user_id, work_id);

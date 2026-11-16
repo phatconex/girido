@@ -1,8 +1,40 @@
-// Màn hình Cài đặt: nơi lưu dữ liệu, tài khoản. Xuất và nhập JSON chỉ hiện ở chế độ lưu trên máy; khi đã lưu lên Supabase thì không cần.
-import { useRef, useState, type ChangeEvent } from 'react';
+// Màn hình Cài đặt: nơi lưu dữ liệu, tài khoản, pomodoro, nhắc uống nước và đứng dậy. Xuất và nhập JSON chỉ hiện ở chế độ lưu trên máy; khi đã lưu lên Supabase thì không cần.
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import GG from '../lib/logic';
 import { useApp } from '../app-context';
 import { useDialogs } from '../dialogs';
+import { prefs, usePrefs, LIMITS, type Prefs } from '../timers/prefs';
+import { chime, unlock, askNotify, stopSound, STYLES, FILES, type Chime } from '../timers/sound';
+import { Picker, type Option } from '../WorkPicker';
+
+const SOUND_OPTIONS: Option[] = [
+  ...FILES.map((f) => ({ id: f.id, name: f.name, project: 'File âm thanh' })),
+  ...STYLES.map((s) => ({ id: s.id, name: s.name, project: 'Tiếng tổng hợp' })),
+];
+
+/** Ô nhập số phút: gõ tự do, rời ô thì kéo về khoảng cho phép và lưu. */
+function Minutes({ id, label, field, disabled }: { id: string; label: string; field: keyof typeof LIMITS; disabled?: boolean }) {
+  const p = usePrefs();
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => { if (draft !== null && draft.trim() !== '' && Number.isFinite(+draft)) prefs.set({ [field]: +draft } as Partial<Prefs>); setDraft(null); };
+  return (
+    <label className="mk-min">
+      <input className="gg-input" id={id} type="number" inputMode="numeric" min={LIMITS[field][0]} max={LIMITS[field][1]} step={1} disabled={disabled} aria-label={label}
+        value={draft ?? String(p[field])} onChange={(e) => setDraft(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }} />
+      phút
+    </label>
+  );
+}
+
+function Switch({ id, label, hint, on, onChange, children }: { id: string; label: string; hint?: string; on: boolean; onChange: (on: boolean) => void; children?: React.ReactNode }) {
+  return (
+    <div className="mk-set">
+      <button className="mk-switch" id={id} type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}><span /></button>
+      <p className="mk-set__text"><b>{label}</b>{hint}</p>
+      {children}
+    </div>
+  );
+}
 
 export default function Settings() {
   const { state: st, store, today, go, account } = useApp();
@@ -10,6 +42,15 @@ export default function Settings() {
   const [error, setError] = useState('');
   const file = useRef<HTMLInputElement>(null);
   const cloud = store.kind === 'supabase';
+  useEffect(() => stopSound, []);   // rời màn Cài đặt thì tắt tiếng đang nghe thử
+  const p = usePrefs();
+  const remind = (patch: Partial<Prefs>, on: boolean) => { if (on) { unlock(); askNotify(); } prefs.set(patch); };
+  const test = (kind: Chime, style: string, volume = p.volume) => { unlock(); chime(kind, style, volume); };
+  // chọn một kiểu âm báo là nghe thử luôn kiểu đó
+  const sound = (field: 'soundWater' | 'soundStand' | 'soundPomo', kind: Chime) => (
+    <Picker id={'pref-' + field} cls="mk-pick--sound" options={SOUND_OPTIONS} value={p[field]} label="Âm báo" what="âm báo"
+      onChange={(id) => { prefs.set({ [field]: id } as Partial<Prefs>); test(kind, id); }} />
+  );
 
   const exportJson = () => {
     const json = JSON.stringify(GG.exportData(store.state(), new Date().toISOString()), null, 2);
@@ -59,6 +100,42 @@ export default function Settings() {
           </div>
         </section>
       )}
+
+      <section className="mk-sec">
+        <p className="mk-group">Pomodoro</p>
+        <p className="gg-muted">Bấm nút ▶ cạnh một việc ở màn Hôm nay để bắt đầu. Số phút dưới đây là mặc định; khi đồng hồ đang chạy bạn đổi được thời lượng riêng cho việc đó. Hết giờ tập trung thì việc đó được cộng một pomodoro, rồi tới giờ nghỉ.</p>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Tập trung</b>Độ dài một pomodoro</p>
+          <Minutes id="pref-focus" label="Số phút tập trung" field="focusMin" />
+        </div>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Nghỉ</b>Sau mỗi pomodoro</p>
+          <Minutes id="pref-break" label="Số phút nghỉ" field="breakMin" />
+        </div>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Âm báo hết giờ</b>Khi xong một pomodoro và khi hết giờ nghỉ</p>
+          {sound('soundPomo', 'focus')}
+        </div>
+      </section>
+
+      <section className="mk-sec">
+        <p className="mk-group">Nhắc nhở</p>
+        <Switch id="pref-water" label="Nhắc uống nước" hint="Nhắc lại sau mỗi" on={p.waterOn} onChange={(on) => remind({ waterOn: on }, on)}>
+          {sound('soundWater', 'water')}
+          <Minutes id="pref-water-min" label="Số phút giữa hai lần nhắc uống nước" field="waterMin" disabled={!p.waterOn} />
+        </Switch>
+        <Switch id="pref-stand" label="Nhắc đứng dậy" hint="Nhắc lại sau mỗi" on={p.standOn} onChange={(on) => remind({ standOn: on }, on)}>
+          {sound('soundStand', 'stand')}
+          <Minutes id="pref-stand-min" label="Số phút giữa hai lần nhắc đứng dậy" field="standMin" disabled={!p.standOn} />
+        </Switch>
+        <Switch id="pref-sound" label="Âm báo" hint="Cho nhắc nhở và pomodoro" on={p.sound} onChange={(on) => { prefs.set({ sound: on }); if (on) test('water', p.soundWater); else stopSound(); }}>
+          <label className="mk-vol">Âm lượng
+            <input id="pref-volume" type="range" min={0} max={100} step={5} value={p.volume} disabled={!p.sound} aria-label="Âm lượng âm báo"
+              onChange={(e) => prefs.set({ volume: +e.target.value })} onPointerUp={(e) => test('water', p.soundWater, +e.currentTarget.value)} onKeyUp={(e) => test('water', p.soundWater, +e.currentTarget.value)} />
+          </label>
+        </Switch>
+        <p className="gg-muted">Girido chỉ nhắc được khi đang mở trong một tab. Đồng hồ đếm lại từ đầu mỗi khi bạn bật hoặc đổi số phút. Các cài đặt ở mục Pomodoro và Nhắc nhở lưu riêng cho trình duyệt này.</p>
+      </section>
 
       {!cloud && <>
       <section className="mk-sec">

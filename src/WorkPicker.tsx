@@ -1,4 +1,4 @@
-// Ô chọn công việc có tìm kiếm: bấm mở danh sách gom theo project, gõ để lọc (không cần gõ dấu), mũi tên và Enter để chọn.
+// Ô chọn có tìm kiếm (Picker) và bản dành cho công việc (WorkPicker): bấm mở danh sách gom theo project, gõ để lọc (không cần gõ dấu), mũi tên và Enter để chọn.
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { Project } from './lib/logic';
@@ -8,9 +8,16 @@ export function fold(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
 }
 
-interface Option { id: string; name: string; project: string }
+export interface Option { id: string; name: string; project: string }
 
-export default function WorkPicker({ projects, value, onChange, id }: { projects: Project[]; value: string; onChange: (workId: string) => void; id: string }) {
+export default function WorkPicker({ projects, value, onChange, id, first }: { projects: Project[]; value: string; onChange: (workId: string) => void; id: string; first?: Option }) {
+  const all = useMemo<Option[]>(() => (first ? [first] : []).concat(projects.flatMap((p) =>
+    p.works.slice().sort((a, b) => a.order - b.order).map((w) => ({ id: w.id, name: w.name, project: p.name })))), [projects, first]);
+  return <Picker id={id} options={all} value={value} onChange={onChange} label="Thuộc công việc" what="công việc" placeholder="Tìm công việc hoặc project" />;
+}
+
+/** `project` của mỗi lựa chọn là tên nhóm; để rỗng thì danh sách không chia nhóm và nút hiện `label` ở dòng nhỏ. */
+export function Picker({ options: all, value, onChange, id, label, what, placeholder, cls }: { options: Option[]; value: string; onChange: (id: string) => void; id: string; label: string; what: string; placeholder?: string; cls?: string }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -22,8 +29,6 @@ export default function WorkPicker({ projects, value, onChange, id }: { projects
   const [place, setPlace] = useState<CSSProperties>({});
   const uid = useId();
 
-  const all = useMemo<Option[]>(() => projects.flatMap((p) =>
-    p.works.slice().sort((a, b) => a.order - b.order).map((w) => ({ id: w.id, name: w.name, project: p.name }))), [projects]);
   const shown = useMemo(() => {
     const q = fold(query);
     return q ? all.filter((o) => fold(o.name).includes(q) || fold(o.project).includes(q)) : all;
@@ -82,14 +87,14 @@ export default function WorkPicker({ projects, value, onChange, id }: { projects
 
   let lastProject = '';
   return (
-    <div className={'mk-pick' + (open ? ' is-open' : '')} ref={root}>
+    <div className={'mk-pick' + (open ? ' is-open' : '') + (cls ? ' ' + cls : '')} ref={root}>
       <button className="mk-pick__btn" id={id} ref={button} type="button" aria-haspopup="listbox" aria-expanded={open}
-        aria-label={'Thuộc công việc: ' + (current ? current.project + ', ' + current.name : 'chưa chọn')}
+        aria-label={label + ': ' + (current ? (current.project ? current.project + ', ' : '') + current.name : 'chưa chọn')}
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); openList(); } }}>
         <span className="mk-pick__text">
-          <small>{current ? current.project : 'Công việc'}</small>
-          <b>{current ? current.name : 'Chọn công việc'}</b>
+          <small>{(current && current.project) || label}</small>
+          <b>{current ? current.name : 'Chọn ' + what}</b>
         </span>
         <svg className="mk-pick__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
       </button>
@@ -99,16 +104,16 @@ export default function WorkPicker({ projects, value, onChange, id }: { projects
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
             <input ref={search} type="text" role="combobox" aria-expanded="true" aria-controls={uid + '-list'} aria-autocomplete="list"
               aria-activedescendant={shown[active] ? uid + '-' + shown[active].id : undefined}
-              aria-label="Tìm công việc" placeholder="Tìm công việc hoặc project" value={query} maxLength={80}
+              aria-label={'Tìm ' + what} placeholder={placeholder || 'Tìm ' + what} value={query} maxLength={80}
               onChange={(e) => { setQuery(e.target.value); setActive(0); }} onKeyDown={onKey} />
           </div>
-          <div className="mk-pick__list" id={uid + '-list'} role="listbox" aria-label="Công việc" ref={list}>
+          <div className="mk-pick__list" id={uid + '-list'} role="listbox" aria-label={label} ref={list}>
             {shown.map((o, i) => {
               const head = o.project !== lastProject;
               lastProject = o.project;
               return (
                 <div key={o.id} role="presentation">
-                  {head && <p className="mk-pick__group" role="presentation">{o.project}</p>}
+                  {head && o.project && <p className="mk-pick__group" role="presentation">{o.project}</p>}
                   <div className="mk-pick__opt" id={uid + '-' + o.id} role="option" aria-selected={o.id === value} data-active={i === active}
                     onPointerMove={() => setActive(i)} onClick={() => pick(o)}>
                     <span>{o.name}</span>
@@ -117,7 +122,7 @@ export default function WorkPicker({ projects, value, onChange, id }: { projects
                 </div>
               );
             })}
-            {!shown.length && <p className="mk-pick__empty">Không có công việc nào khớp “{query.trim()}”.</p>}
+            {!shown.length && <p className="mk-pick__empty">Không có {what} nào khớp “{query.trim()}”.</p>}
           </div>
         </div>,
         document.body,

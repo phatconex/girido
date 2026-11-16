@@ -217,3 +217,66 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 .gd-auth { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); padding: var(--space-6) var(--space-4); }
 .gd-auth__giri { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); max-width: 420px; }
 .gd-auth__card { width: 100%; max-width: 420px; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* ---- việc lẻ và pomodoro ở màn Hôm nay ---- */
+.mk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.mk-hint { margin-top: calc(var(--space-1) * -1); }
+.mk-linkbtn { padding: 0; border: 0; background: none; color: var(--water-text); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.mk-item.is-focus { background: var(--sun-100); }
+.mk-pomos { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: var(--radius-pill); background: var(--ember-100); color: var(--ember-500); font: 800 13px/1 var(--font-body); }
+.mk-pomos i { width: 10px; height: 10px; border-radius: 50%; background: var(--petal-red); box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.12); }
+.mk-focus { flex: none; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 2px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--water-text); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.mk-focus:hover { background: var(--water-100); border-color: var(--line-strong); }
+.mk-focus:focus-visible { outline: 3px solid var(--water-600); outline-offset: 2px; }
+.mk-focus .mk-icon { width: 16px; height: 16px; fill: currentColor; stroke-width: 1.5; margin-left: 2px; }
+
+/* ---- góc đồng hồ: pomodoro và thẻ nhắc ---- */
+.mk-dock { position: fixed; z-index: 35; right: max(16px, 2vw); bottom: max(16px, 2vh); display: grid; gap: var(--space-2); width: min(340px, calc(100vw - 32px)); }
+.mk-pomo, .mk-remind { border: 2px solid var(--line-strong); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-card); color: var(--ink); }
+.mk-pomo { display: grid; gap: 6px; padding: var(--space-3) var(--space-4) var(--space-4); }
+.mk-pomo__top { display: flex; align-items: center; }
+.mk-pomo__phase { flex: 1; font: 800 12px/16px var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--water-text); }
+.mk-pomo--break .mk-pomo__phase { color: var(--leaf-text); }
+.mk-pomo__x { display: grid; place-items: center; width: 32px; height: 32px; margin: -4px -8px -4px 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-soft); cursor: pointer; }
+.mk-pomo__x:hover { background: var(--surface-soft); color: var(--ink); }
+.mk-pomo__x .mk-icon { width: 18px; height: 18px; }
+.mk-pomo__task { margin: 0; overflow: hidden; font: 700 15px/20px var(--font-body); white-space: nowrap; text-overflow: ellipsis; }
+.mk-pomo__row { display: flex; align-items: center; gap: var(--space-2); }
+.mk-pomo__time { flex: 1; margin: 0; font: 800 40px/44px var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+.mk-pomo__bar { height: 8px; border-radius: var(--radius-pill); background: var(--track); overflow: hidden; }
+.mk-pomo__bar span { display: block; height: 100%; border-radius: inherit; background: var(--water-500); transition: width 0.5s linear; }
+.mk-pomo--break .mk-pomo__bar span { background: var(--leaf-500); }
+.mk-remind { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); animation: mk-pick-in var(--dur-base) var(--ease-out); }
+.mk-remind__icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--water-100); color: var(--water-text); }
+.mk-remind--stand .mk-remind__icon { background: var(--sun-100); color: var(--sun-text); }
+.mk-remind__icon .mk-icon { width: 22px; height: 22px; }
+.mk-remind__text { flex: 1; min-width: 0; margin: 0; font: 600 13px/18px var(--font-body); color: var(--ink-soft); }
+.mk-remind__text b { display: block; font: 800 15px/20px var(--font-body); color: var(--ink); }
+
+/* ---- các dòng tùy chọn trong Cài đặt ---- */
+.mk-set { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; min-height: 52px; }
+.mk-set__text { flex: 1 1 160px; min-width: 0; margin: 0; font: 600 13px/18px var(--font-body); color: var(--ink-soft); }
+.mk-set__text b { display: block; font: 800 16px/22px var(--font-body); color: var(--ink); }
+.mk-min { display: inline-flex; align-items: center; gap: var(--space-2); font: 700 14px/20px var(--font-body); color: var(--ink-soft); }
+.mk-min .gg-input { width: 84px; height: 44px; padding: 0 var(--space-2); text-align: center; font-weight: 800; }
+.mk-min .gg-input:disabled { opacity: 0.5; }
+.mk-switch { flex: none; position: relative; width: 52px; height: 30px; padding: 0; border: 2px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--track); cursor: pointer; transition: background var(--dur-fast) var(--ease-out); }
+.mk-switch span { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); transition: transform var(--dur-fast) var(--ease-out); }
+.mk-switch[aria-checked="true"] { background: var(--leaf-500); border-color: var(--leaf-600); }
+.mk-switch[aria-checked="true"] span { transform: translateX(22px); }
+.mk-switch:focus-visible { outline: 3px solid var(--water-600); outline-offset: 2px; }
+@media (max-width: 560px) { .mk-dock { left: 16px; right: 16px; width: auto; } }
+@media (prefers-reduced-motion: reduce) { .mk-switch, .mk-switch span, .mk-pomo__bar span, .mk-remind { transition: none; animation: none; } }
+
+/* ---- đổi thời lượng ngay trên đồng hồ pomodoro, chọn kiểu âm báo ---- */
+.mk-pomo__len { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.mk-pomo__preset { min-width: 38px; height: 32px; padding: 0 8px; border: 2px solid var(--line); border-radius: var(--radius-pill); background: var(--surface-soft); color: var(--ink); font: 800 13px/1 var(--font-body); cursor: pointer; }
+.mk-pomo__preset:hover { border-color: var(--water-500); }
+.mk-pomo__preset[aria-pressed="true"] { border-color: var(--line-strong); background: var(--water-100); color: var(--water-text); }
+.mk-pomo__preset:focus-visible, .mk-pomo__custom input:focus-visible { outline: 3px solid var(--water-600); outline-offset: 2px; }
+.mk-pomo__custom { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font: 700 13px/1 var(--font-body); color: var(--ink-soft); }
+.mk-pomo__custom input { width: 56px; height: 32px; padding: 0 4px; border: 2px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font: 800 14px/1 var(--font-body); text-align: center; }
+.mk-pick--sound { flex: 0 0 180px; }
+.mk-pick--sound .mk-pick__btn { height: 44px; }
+.mk-vol { display: inline-flex; align-items: center; gap: var(--space-2); font: 700 14px/20px var(--font-body); color: var(--ink-soft); }
+.mk-vol input { width: 160px; accent-color: var(--leaf-600); }

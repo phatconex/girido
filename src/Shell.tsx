@@ -12,6 +12,7 @@ import Projects from './screens/Projects';
 import { GardenPlot, GardenTrail } from './screens/Garden';
 import Mood from './screens/Mood';
 import Settings from './screens/Settings';
+import Timers from './timers/Timers';
 
 const SCREENS: Record<string, { tab: string; wide?: boolean }> = {
   'hom-nay': { tab: 'hom-nay' },
@@ -102,7 +103,7 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
   const stage = planted ? 5 : GG.stageFor(pr.pct, pr.total), kind = GG.kindFor(state, today);
   const cp = GG.canPlant(state, today, today), late = GG.overdue(state, today).length, left = pr.total - pr.done;
   let mood: GiriMood = 'happy', line: string;
-  if (!state.projects.length) line = 'Chào bạn, mình là Giri! Tạo project đầu tiên rồi mình cùng trồng cây nhé.';
+  if (!state.projects.length && !pr.total) line = 'Chào bạn, mình là Giri! Thêm việc đầu tiên rồi mình cùng trồng cây nhé.';
   else if (planted) { mood = 'cheer'; line = 'Hôm nay trồng cây rồi. Khu rừng lại xanh thêm một chút!'; }
   else if (cp.ok) { mood = 'cheer'; line = 'Xong hết việc rồi! Mang cây ra khu đất thôi.'; }
   else if (late) { mood = 'sad'; line = 'Còn ' + late + ' việc từ hôm trước. Mình mang sang hôm nay nhé?'; }
@@ -246,6 +247,7 @@ export default function Shell({ store, account }: { store: Store; account: Accou
           <div className="mk-frame"><div className="mk-paper">{screen}</div></div>
         </main>
       </div>
+      {!waiting && <Timers />}
       <div className="ga-status gg" role="status" hidden={snap.status !== 'error'}>
         {snap.status === 'error' && <>
           <span className="mk-grow">{store.kind === 'supabase' ? 'Chưa lưu được lên máy chủ. Thay đổi vẫn còn trên trang này, bạn thử lưu lại nhé.' : 'Trình duyệt chưa cho lưu dữ liệu. Thay đổi vẫn còn trên trang này; vào Cài đặt để xuất JSON.'}</span>

@@ -12,6 +12,9 @@ const ICONS = {
   next: '<path d="M10 6l6 6-6 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  play: '<path d="M8 5.5v13l11-6.5z"/>',
+  drop: '<path d="M12 3.5c3.2 3.8 6 7 6 10.2a6 6 0 01-12 0c0-3.2 2.8-6.4 6-10.2z"/>',
+  stand: '<circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M7 9.5l5-1.5 5 1.5M12 14l-3.5 6.5M12 14l3.5 6.5"/>',
   edit: '<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>',
   trash: '<path d="M5 7h14M10 7V4.5h4V7M7 7l1 12.5h8L17 7M10.5 11v5M13.5 11v5"/>',
 };

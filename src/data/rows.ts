@@ -4,7 +4,8 @@ import type { State, Project, Todo, Day } from '../lib/logic';
 
 export interface ProjectRow { id: string; name: string; created_on: string; pos: number }
 export interface WorkRow { id: string; project_id: string; name: string; sort: number }
-export interface TodoRow { id: string; work_id: string; text: string; date: string; done: boolean; done_at: string | null; pos: number }
+/** `work_id` null là việc lẻ, không thuộc project nào. */
+export interface TodoRow { id: string; work_id: string | null; text: string; date: string; done: boolean; done_at: string | null; pomos: number; pos: number }
 export interface DayRow { date: string; kind: string | null; planted: boolean; mood: number | null }
 export interface Rows { projects: ProjectRow[]; works: WorkRow[]; todos: TodoRow[]; days: DayRow[] }
 
@@ -17,7 +18,7 @@ export function toRows(st: State): Rows {
     projects.push({ id: p.id, name: p.name, created_on: p.createdAt, pos: i });
     p.works.forEach((w) => works.push({ id: w.id, project_id: p.id, name: w.name, sort: w.order }));
   });
-  const todos = st.todos.map((t: Todo, i): TodoRow => ({ id: t.id, work_id: t.workId, text: t.text, date: t.date, done: t.done, done_at: t.doneAt, pos: i }));
+  const todos = st.todos.map((t: Todo, i): TodoRow => ({ id: t.id, work_id: t.workId || null, text: t.text, date: t.date, done: t.done, done_at: t.doneAt, pomos: t.pomos || 0, pos: i }));
   const days = Object.keys(st.days).sort().map((date): DayRow => {
     const d: Day = st.days[date];
     return { date, kind: d.kind ?? null, planted: !!d.planted, mood: d.mood ?? null };
@@ -34,7 +35,11 @@ export function fromRows(rows: Rows): State {
     id: p.id, name: p.name, createdAt: p.created_on,
     works: (byProject.get(p.id) || []).slice().sort((a, b) => a.sort - b.sort).map((w) => ({ id: w.id, name: w.name, order: w.sort })),
   }));
-  const todos = rows.todos.filter((t) => workIds.has(t.work_id)).map((t) => ({ id: t.id, workId: t.work_id, text: t.text, date: t.date, done: t.done, doneAt: t.done_at }));
+  const todos = rows.todos.filter((t) => t.work_id == null || workIds.has(t.work_id)).map((t): Todo => {
+    const todo: Todo = { id: t.id, workId: t.work_id || '', text: t.text, date: t.date, done: t.done, doneAt: t.done_at };
+    if (t.pomos) todo.pomos = t.pomos;
+    return todo;
+  });
   const days: State['days'] = {};
   rows.days.forEach((r) => {
     const d: Day = {};

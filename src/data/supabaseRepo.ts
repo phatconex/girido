@@ -39,7 +39,7 @@ export function createSupabaseRepo(db: SupabaseClient, userId: string): Repo {
       const [projects, works, todos, days] = await Promise.all([
         all<Rows['projects'][number]>('projects', 'id,name,created_on,pos', ['created_at', 'pos', 'id']),
         all<Rows['works'][number]>('works', 'id,project_id,name,sort', ['sort', 'id']),
-        all<Rows['todos'][number]>('todos', 'id,work_id,text,date,done,done_at,pos', ['created_at', 'pos', 'id']),
+        all<Rows['todos'][number]>('todos', 'id,work_id,text,date,done,done_at,pomos,pos', ['created_at', 'pos', 'id']),
         all<Rows['days'][number]>('days', 'date,kind,planted,mood', ['date']),
       ]);
       return fromRows({ projects, works, todos, days });
