@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { scene } from './lib/world';
+import { skyAt } from './lib/daytime';
+import { usePrefs } from './timers/prefs';
 import { supabase } from './data/supabase';
 import { createStore } from './data/store';
 import { createLocalRepo } from './data/localRepo';
@@ -12,7 +14,20 @@ import Auth from './screens/Auth';
 import type { Account } from './app-context';
 
 const SCENE = scene();
-function Scene() { return <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: SCENE }} />; }
+/** Cảnh nền. Sáng, chiều hay tối là do thuộc tính data-sky trên thẻ html quyết định (màu nằm trong app.css). */
+function Scene() {
+  const { scene: wanted } = usePrefs();
+  const [auto, setAuto] = useState(() => skyAt(new Date()));
+  useEffect(() => {
+    const sync = () => setAuto(skyAt(new Date()));
+    const id = setInterval(sync, 60000);
+    document.addEventListener('visibilitychange', sync);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', sync); };
+  }, []);
+  const sky = wanted === 'auto' ? auto : wanted;
+  useEffect(() => { document.documentElement.dataset.sky = sky; }, [sky]);
+  return useMemo(() => <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: SCENE }} />, []);
+}
 
 function LocalApp() {
   const store = useMemo(() => createStore(createLocalRepo(), { delay: 120 }), []);

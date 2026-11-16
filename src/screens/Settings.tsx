@@ -7,6 +7,12 @@ import { prefs, usePrefs, LIMITS, type Prefs } from '../timers/prefs';
 import { chime, unlock, askNotify, stopSound, STYLES, FILES, type Chime } from '../timers/sound';
 import { Picker, type Option } from '../WorkPicker';
 
+const SCENE_OPTIONS: Option[] = [
+  { id: 'auto', name: 'Tự đổi theo giờ', project: '' },
+  { id: 'day', name: 'Luôn buổi sáng', project: '' },
+  { id: 'dusk', name: 'Luôn buổi chiều', project: '' },
+  { id: 'night', name: 'Luôn buổi tối', project: '' },
+];
 const SOUND_OPTIONS: Option[] = [
   ...FILES.map((f) => ({ id: f.id, name: f.name, project: 'File âm thanh' })),
   ...STYLES.map((s) => ({ id: s.id, name: s.name, project: 'Tiếng tổng hợp' })),
@@ -100,6 +106,14 @@ export default function Settings() {
           </div>
         </section>
       )}
+
+      <section className="mk-sec">
+        <p className="mk-group">Phong cảnh</p>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Khung cảnh nền</b>Sáng từ 5 giờ, chiều vàng từ 15 giờ, tối có trăng sao từ 18 giờ 30</p>
+          <Picker id="pref-scene" cls="mk-pick--sound" options={SCENE_OPTIONS} value={p.scene} label="Phong cảnh" what="phong cảnh" onChange={(id) => prefs.set({ scene: id as Prefs['scene'] })} />
+        </div>
+      </section>
 
       <section className="mk-sec">
         <p className="mk-group">Pomodoro</p>

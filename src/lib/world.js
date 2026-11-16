@@ -10,9 +10,20 @@ import Giri from './giri.js';
     for (i = 0; i < 5; i++) s += '<path class="mk-blade ' + (cls || '') + '" style="animation-delay:' + (-i * 0.6) + 's" d="M' + (i * 12 - 4) + ' 0 Q' + (i * 12 + (i - 2) * 6) + ' -' + (30 + (i % 3) * 14) + ' ' + (i * 12 + (i - 2) * 12) + ' -' + (52 + (i % 3) * 20) + ' Q' + (i * 12 + 6 + (i - 2) * 4) + ' -24 ' + (i * 12 + 6) + ' 0z"/>';
     return s + '</g>';
   }
+  /* vị trí sao [x, y, bán kính] và đom đóm [x, y]: cố định, để mỗi lần mở app bầu trời vẫn vậy */
+  var STARS = [[60, 90, 2.6], [150, 210, 2], [240, 60, 3], [300, 300, 2], [420, 120, 2.4], [470, 250, 2], [700, 300, 2.4], [760, 40, 2],
+    [880, 220, 2.6], [940, 90, 2], [1010, 300, 2], [1060, 150, 2.8], [1120, 50, 2], [1340, 80, 2.4], [1400, 210, 2], [1460, 120, 2.8], [1530, 50, 2], [1560, 250, 2.4],
+    [110, 330, 2], [380, 380, 2], [660, 420, 1.8], [900, 370, 2], [1290, 330, 2], [1500, 380, 1.8]];
+  var FIREFLIES = [[250, 620], [470, 700], [640, 610], [930, 640], [1130, 690], [1330, 650], [1520, 690]];
   function scene() {
     var s = '<svg viewBox="0 0 1600 900" preserveAspectRatio="xMinYMax slice" aria-hidden="true">', i;
-    s += '<circle class="mk-halo" cx="1240" cy="170" r="130"/><circle class="mk-sun" cx="1240" cy="170" r="70"/>';
+    /* Mặt trời và trăng nằm ở khoảng trống giữa thẻ cây hôm nay và bảng việc, để không bị giao diện che mất. */
+    /* trời đêm: sao và trăng khuyết, chỉ hiện khi cảnh là buổi tối (xem [data-sky] trong app.css) */
+    s += '<g class="mk-night"><defs><mask id="mk-moon-mask"><rect x="420" y="20" width="260" height="260" fill="#fff"/><circle cx="592" cy="128" r="56" fill="#000"/></mask></defs>';
+    STARS.forEach(function (p, i) { s += '<circle class="mk-star" style="animation-delay:' + (-(i % 7) * 0.55) + 's" cx="' + p[0] + '" cy="' + p[1] + '" r="' + p[2] + '"/>'; });
+    s += star(330, 150, 9, -0.4).replace('mk-spark', 'mk-star') + star(820, 110, 7, -1.6).replace('mk-spark', 'mk-star') + star(1470, 300, 8, -2.4).replace('mk-spark', 'mk-star');
+    s += '<circle class="mk-moonglow" cx="550" cy="148" r="120"/><circle class="mk-moon" cx="550" cy="148" r="66" mask="url(#mk-moon-mask)"/></g>';
+    s += '<g class="mk-sunwrap"><circle class="mk-halo" cx="580" cy="150" r="130"/><circle class="mk-sun" cx="580" cy="150" r="70"/></g>';
     s += '<g class="mk-drift mk-drift--slow" style="animation-delay:-60s">' + cloud(0, 150, 1) + '</g><g class="mk-drift mk-drift--slow" style="animation-delay:-150s">' + cloud(0, 250, 0.7) + '</g>';
     s += '<path class="mk-far" d="M0 560 Q120 400 250 440 Q360 330 500 430 Q620 500 760 400 Q880 320 1010 420 Q1150 500 1290 380 Q1430 300 1600 430 V900 H0z"/>';
     s += '<g class="mk-drift" style="animation-delay:-20s">' + cloud(0, 330, 0.9) + '</g><g class="mk-drift" style="animation-delay:-80s">' + cloud(0, 210, 1.2) + '</g>';
@@ -35,6 +46,7 @@ import Giri from './giri.js';
     [[60, 690], [330, 660], [520, 690], [640, 760], [700, 850], [470, 870]].forEach(function (f, i) { s += '<circle class="mk-flower' + (i % 2 ? ' mk-flower--pink' : '') + '" cx="' + f[0] + '" cy="' + f[1] + '" r="5"/><circle class="mk-flower' + (i % 2 ? '' : ' mk-flower--pink') + '" cx="' + (f[0] + 12) + '" cy="' + (f[1] + 5) + '" r="3.5"/>'; });
     s += blades(610, 720, 0.5) + blades(20, 700, 0.55) + blades(700, 800, 0.45);
     s += '<g class="mk-flock"><g transform="translate(0 260)"><path class="mk-bird mk-flap" d="M0 0 q10 -12 20 0 q10 -12 20 0"/></g><g transform="translate(-70 300) scale(0.7)"><path class="mk-bird mk-flap" style="animation-delay:-0.3s" d="M0 0 q10 -12 20 0 q10 -12 20 0"/></g><g transform="translate(-40 230) scale(0.8)"><path class="mk-bird mk-flap" style="animation-delay:-0.5s" d="M0 0 q10 -12 20 0 q10 -12 20 0"/></g></g>';
+    s += '<g class="mk-night">'; FIREFLIES.forEach(function (p, i) { s += '<circle class="mk-firefly" style="animation-delay:' + (-i * 1.3) + 's" cx="' + p[0] + '" cy="' + p[1] + '" r="4"/>'; }); s += '</g>';
     for (i = 0; i < 5; i++) s += '<path class="mk-leaf-fall" style="animation-delay:' + (-i * 2.9) + 's" d="M' + (240 + i * 190) + ' 0 q12 -8 20 4 q-12 8 -20 -4z"/>';
     s += blades(1330, 910, 2.3, 'mk-blade--front') + blades(1480, 915, 1.7) + blades(-20, 915, 1.5, 'mk-blade--front');
     return '<div class="mk-scene" aria-hidden="true">' + s + '</svg></div>';

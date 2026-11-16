@@ -10,8 +10,10 @@ export interface Prefs {
   /** Kiểu âm báo cho từng loại (xem STYLES trong sound.ts) và âm lượng 0 đến 100. */
   soundWater: string; soundStand: string; soundPomo: string;
   volume: number;
+  /** Phong cảnh: 'auto' đổi theo giờ, hoặc giữ cố định sáng, chiều, tối. */
+  scene: 'auto' | 'day' | 'dusk' | 'night';
 }
-export const DEFAULTS: Prefs = { focusMin: 25, breakMin: 5, waterOn: false, waterMin: 45, standOn: false, standMin: 60, sound: true, soundWater: 'drop', soundStand: 'chime', soundPomo: 'bell', volume: 70 };
+export const DEFAULTS: Prefs = { focusMin: 25, breakMin: 5, waterOn: false, waterMin: 45, standOn: false, standMin: 60, sound: true, soundWater: 'drop', soundStand: 'chime', soundPomo: 'bell', volume: 70, scene: 'auto' };
 export const LIMITS = { focusMin: [1, 180], breakMin: [1, 60], waterMin: [1, 480], standMin: [1, 480] } as const;
 
 /** Các kiểu âm báo có sẵn. Tên hiển thị và cách phát nằm trong sound.ts. */
@@ -27,7 +29,8 @@ export function normalize(raw: unknown): Prefs {
   const bool = (k: keyof Prefs) => (typeof o[k] === 'boolean' ? (o[k] as boolean) : (DEFAULTS[k] as boolean));
   const num = (k: keyof typeof LIMITS) => int(o[k], LIMITS[k][0], LIMITS[k][1], DEFAULTS[k]);
   const style = (k: 'soundWater' | 'soundStand' | 'soundPomo') => (typeof o[k] === 'string' && STYLE_IDS.includes(o[k] as string) ? (o[k] as string) : DEFAULTS[k]);
-  return { soundWater: style('soundWater'), soundStand: style('soundStand'), soundPomo: style('soundPomo'), volume: int(o.volume, 0, 100, DEFAULTS.volume), focusMin: num('focusMin'), breakMin: num('breakMin'), waterOn: bool('waterOn'), waterMin: num('waterMin'), standOn: bool('standOn'), standMin: num('standMin'), sound: bool('sound') };
+  const scene = (['auto', 'day', 'dusk', 'night'] as const).find((x) => x === o.scene) || DEFAULTS.scene;
+  return { scene, soundWater: style('soundWater'), soundStand: style('soundStand'), soundPomo: style('soundPomo'), volume: int(o.volume, 0, 100, DEFAULTS.volume), focusMin: num('focusMin'), breakMin: num('breakMin'), waterOn: bool('waterOn'), waterMin: num('waterMin'), standOn: bool('standOn'), standMin: num('standMin'), sound: bool('sound') };
 }
 
 function read(): Prefs {

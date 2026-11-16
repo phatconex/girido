@@ -13,6 +13,7 @@ import { GardenPlot, GardenTrail } from './screens/Garden';
 import Mood from './screens/Mood';
 import Settings from './screens/Settings';
 import Timers from './timers/Timers';
+import { greeting, periodAt } from './lib/daytime';
 
 const SCREENS: Record<string, { tab: string; wide?: boolean }> = {
   'hom-nay': { tab: 'hom-nay' },
@@ -102,14 +103,24 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
   const pr = GG.dayProgress(state, today), planted = !!state.days[today]?.planted;
   const stage = planted ? 5 : GG.stageFor(pr.pct, pr.total), kind = GG.kindFor(state, today);
   const cp = GG.canPlant(state, today, today), late = GG.overdue(state, today).length, left = pr.total - pr.done;
+  // lời chào theo buổi và theo mảnh cảm xúc hôm nay; xem lại mỗi phút để sang buổi mới thì đổi câu
+  const [period, setPeriod] = useState(() => periodAt(new Date()));
+  useEffect(() => {
+    const sync = () => setPeriod(periodAt(new Date()));
+    const id = setInterval(sync, 60000);
+    document.addEventListener('visibilitychange', sync);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', sync); };
+  }, []);
+  const firstRun = !state.projects.length && !state.todos.length;
+  const hello = firstRun ? '' : greeting(period, state.days[today]?.mood, today);
   let mood: GiriMood = 'happy', line: string;
-  if (!state.projects.length && !pr.total) line = 'Chào bạn, mình là Giri! Thêm việc đầu tiên rồi mình cùng trồng cây nhé.';
-  else if (planted) { mood = 'cheer'; line = 'Hôm nay trồng cây rồi. Khu rừng lại xanh thêm một chút!'; }
-  else if (cp.ok) { mood = 'cheer'; line = 'Xong hết việc rồi! Mang cây ra khu đất thôi.'; }
-  else if (late) { mood = 'sad'; line = 'Còn ' + late + ' việc từ hôm trước. Mình mang sang hôm nay nhé?'; }
-  else if (!pr.total) { mood = 'sleepy'; line = 'Hôm nay chưa có việc nào. Bạn muốn làm gì?'; }
-  else if (!pr.done) line = 'Có ' + pr.total + ' việc đang chờ. Xong hết là có cây mới!';
-  else line = 'Xong ' + pr.done + ' việc rồi. Còn ' + left + ' việc nữa là trồng được cây!';
+  if (firstRun) line = 'Hế lô, mình là Giri nè! Thêm việc đầu tiên đi rồi tụi mình trồng cây nha.';
+  else if (planted) { mood = 'cheer'; line = 'Nay trồng cây rồi nha. Khu rừng lại xanh thêm xíu nè!'; }
+  else if (cp.ok) { mood = 'cheer'; line = 'Xong hết trơn rồi! Vác cây ra khu đất thôi nào.'; }
+  else if (late) { mood = 'sad'; line = 'Còn ' + late + ' việc từ bữa trước á. Mang qua hôm nay luôn hong?'; }
+  else if (!pr.total) { mood = 'sleepy'; line = 'Nay chưa có việc nào hết. Bồ định làm gì nè?'; }
+  else if (!pr.done) line = 'Có ' + pr.total + ' việc đang chờ nè. Xong hết là có cây mới liền!';
+  else line = 'Xong ' + pr.done + ' việc rồi á. Còn ' + left + ' việc nữa là trồng được cây!';
   if (pulse.mood === 'munch') mood = 'munch';
   else if (pulse.mood === 'cheer' && mood !== 'sad') mood = 'cheer';
 
@@ -123,7 +134,7 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
   useEffect(() => { if (pulse.rain) Giri.rain(plantEl.current); }, [pulse.rain]);
   return (
     <div className="mk-hero">
-      <p className="gg-bubble mk-bubble-down"><span className="gg-tag">Giri</span>{line}</p>
+      <p className="gg-bubble mk-bubble-down"><span className="gg-tag">Giri</span>{hello && <span className="mk-hello" id="giri-hello">{hello}</span>}<span id="giri-line">{line}</span></p>
       <div className="mk-hero__stage">
         <span id="giri" style={{ display: 'block' }} dangerouslySetInnerHTML={{ __html: giri }} />
         <span id="day-plant" ref={plantEl} style={{ display: 'block' }} dangerouslySetInnerHTML={{ __html: plant }} />
