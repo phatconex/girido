@@ -1,0 +1,16 @@
+<!-- @dsCard group="Khu vườn" height=640 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col">
+  <div class="gg-card__row"><p class="gg-display">Khu vườn lớn</p><span class="gg-chip gg-chip--leaf" id="total"></span></div>
+  <div id="trail"></div>
+</div>
+<script>
+var all = Object.keys(Giri.kinds), n = 0;
+function month(name, count, seed) {
+  var days = [], i;
+  for (i = 0; i < count; i++) { seed = (seed * 73 + 19) % 101; days.push(seed % 7 === 0 ? null : all[seed % all.length]); if (days[i]) n++; }
+  return { name: name, days: days };
+}
+document.getElementById('trail').innerHTML = Giri.trail([month('Tháng 11', 13, 5), month('Tháng 10', 31, 23), month('Tháng 9', 30, 47)], { per: 9, size: 50 });
+document.getElementById('total').textContent = n + ' cây';
+</script>

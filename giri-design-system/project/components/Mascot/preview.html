@@ -1,0 +1,10 @@
+<!-- @dsCard group="Linh vật" height=320 -->
+<style>body{margin:0}.cap{display:grid;justify-items:center;gap:12px}</style>
+<div class="gg gg-stage gg-stage--deep" id="row" style="gap:var(--space-5);align-items:flex-end"></div>
+<script>
+var labels = { happy: 'happy · lim dim', cheer: 'cheer · ăn mừng', sleepy: 'sleepy · ngủ gật', sad: 'sad · việc trễ', munch: 'munch · nhai lá' }, html = '';
+Object.keys(labels).forEach(function (m) {
+  html += '<div class="cap">' + Giri.mascot(m, 130) + '<span class="gg-chip">' + labels[m] + '</span></div>';
+});
+document.getElementById('row').innerHTML = html;
+</script>

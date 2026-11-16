@@ -1,0 +1,20 @@
+<!-- @dsCard group="Hành trình mọc cây" height=760 -->
+<style>body{margin:0}.cap{display:grid;justify-items:center;gap:8px}.row{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:flex-end}</style>
+<div class="gg gg-stage" style="flex-direction:column;align-items:flex-start;gap:var(--space-6)">
+  <div id="kinds" style="display:grid;gap:var(--space-5)"></div>
+  <p class="gg-label">Sáu cấp của một cây</p>
+  <div class="row" id="stages"></div>
+</div>
+<script>
+var a = '', b = '', i = 0;
+Giri.groups.forEach(function (g) {
+  a += '<p class="gg-label">' + g.name + ' · ' + g.kinds.length + ' loại</p><div class="row">';
+  g.kinds.forEach(function (k) { a += '<div class="cap">' + Giri.plant(5, k, 76) + '<span class="gg-chip gg-chip--leaf">' + Giri.kinds[k] + '</span></div>'; });
+  a += '</div>';
+});
+Giri.stages.forEach(function (n, s) {
+  b += '<div class="cap">' + Giri.plant(s, 'xoai', 76) + '<span class="gg-chip">Cấp ' + s + ' · ' + n + '</span></div>';
+});
+document.getElementById('kinds').innerHTML = a;
+document.getElementById('stages').innerHTML = b;
+</script>

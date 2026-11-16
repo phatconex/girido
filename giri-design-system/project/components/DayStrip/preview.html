@@ -1,0 +1,14 @@
+<!-- @dsCard group="Điều hướng" height=140 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col">
+  <div class="gg-days" id="days"></div>
+</div>
+<script>
+var names = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], html = '';
+names.forEach(function (n, i) {
+  var cls = 'gg-day' + (i < 4 ? ' is-done' : '') + (i === 5 ? ' is-today' : '');
+  html += '<button class="' + cls + '" id="day-' + i + '"' + (i === 5 ? ' aria-current="date"' : '') + '>' + n +
+    '<span class="gg-day__num">' + (9 + i) + '</span><span class="gg-day__mark"></span></button>';
+});
+document.getElementById('days').innerHTML = html;
+</script>

@@ -1,0 +1,39 @@
+<!-- @dsCard group="Khu vườn" height=640 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col gg-forest" style="gap:var(--space-3)">
+  <span class="gg-cloud" style="left:10%;top:70px"></span>
+  <span class="gg-cloud" style="left:66%;top:40px;animation-delay:-5s"></span>
+  <div class="gg-card__row">
+    <button class="gg-btn gg-btn--ghost gg-btn--icon" id="prev" aria-label="Tháng trước">&#8249;</button>
+    <p class="gg-display">Tháng 11</p>
+    <button class="gg-btn gg-btn--ghost gg-btn--icon" id="next" aria-label="Tháng sau" disabled>&#8250;</button>
+  </div>
+  <div id="plot"></div>
+  <div class="gg-card">
+    <div class="gg-card__row"><p class="gg-label" id="count"></p><span class="gg-chip gg-chip--sun">Chuỗi 5 ngày</span></div>
+    <div class="gg-progress gg-progress--leaf" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="30" aria-label="Số cây đã trồng trong tháng"><div class="gg-progress__fill"></div></div>
+    <button class="gg-btn gg-btn--leaf gg-btn--lg" id="grow">Trồng cây hôm nay</button>
+  </div>
+</div>
+<script>
+var all = Object.keys(Giri.kinds), today = 14, days = [], i;
+var seq = [9, 0, 14, 11, 6, 1, 17, null, 13, 4, 10, 15, 2];
+for (i = 0; i < 30; i++) days.push(i < seq.length && seq[i] !== null ? all[seq[i]] : null);
+function draw(fresh) {
+  var n = days.filter(function (v) { return v; }).length;
+  document.getElementById('plot').innerHTML = Giri.plot(days, { today: today, fresh: fresh, size: 400 });
+  document.getElementById('plot').firstChild.style.cssText = 'width:100%;height:auto';
+  document.getElementById('count').textContent = n + ' / 30 cây trong tháng';
+  document.getElementById('bar').firstElementChild.style.setProperty('--value', n / 30 * 100 + '%');
+  document.getElementById('bar').setAttribute('aria-valuenow', n);
+  document.getElementById('grow').disabled = today > 30;
+  document.getElementById('grow').textContent = today > 30 ? 'Hết tháng rồi' : 'Trồng cây hôm nay';
+}
+document.getElementById('grow').addEventListener('click', function () {
+  days[today - 1] = all[(today * 7) % all.length];
+  draw(today);
+  Giri.burst(document.querySelector('.gg-pl-tree.is-new'), 'confetti');
+  today++;
+});
+draw(0);
+</script>

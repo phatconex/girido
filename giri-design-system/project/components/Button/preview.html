@@ -1,0 +1,16 @@
+<!-- @dsCard group="Hành động" height=230 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage">
+  <button class="gg-btn" id="b1"><span class="gg-drop"></span>Tưới cây</button>
+  <button class="gg-btn gg-btn--leaf" id="b2">Xong việc</button>
+  <button class="gg-btn gg-btn--sun" id="b3">Nhận thưởng</button>
+  <button class="gg-btn gg-btn--ghost" id="b4">Để sau</button>
+  <button class="gg-btn gg-btn--clay" id="b8">Xóa việc</button>
+  <button class="gg-btn gg-btn--icon" id="b5" aria-label="Thêm việc">+</button>
+  <button class="gg-btn gg-btn--ghost gg-btn--icon" id="b9" aria-label="Quay lại">&#8249;</button>
+  <button class="gg-btn" id="b6" disabled>Chưa có việc</button>
+  <div style="flex-basis:100%;max-width:360px"><button class="gg-btn gg-btn--lg" id="b7">Gieo hạt mới</button></div>
+</div>
+<script>
+document.getElementById('b1').addEventListener('click', function (e) { Giri.burst(e.currentTarget, 'drops'); });
+</script>

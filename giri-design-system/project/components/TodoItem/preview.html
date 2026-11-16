@@ -1,0 +1,14 @@
+<!-- @dsCard group="Việc cần làm" height=320 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col" style="gap:var(--space-3)">
+  <p class="gg-label">Việc hôm nay</p>
+  <label class="gg-todo"><input type="checkbox" class="gg-check" id="t1"><span class="gg-todo__text">Nghe Cam 18 Test 1</span><span class="gg-chip">Hôm nay</span></label>
+  <label class="gg-todo"><input type="checkbox" class="gg-check" id="t2" checked><span class="gg-todo__text">Học 20 từ mới</span><span class="gg-chip gg-chip--leaf">Xong</span></label>
+  <label class="gg-todo"><input type="checkbox" class="gg-check" id="t3"><span class="gg-todo__text">Viết Task 2 về môi trường</span><span class="gg-chip gg-chip--ember">Trễ 1 ngày</span></label>
+  <label class="gg-todo gg-todo--sub"><input type="checkbox" class="gg-check" id="t4"><span class="gg-todo__text">Lập dàn ý 4 đoạn</span></label>
+</div>
+<script>
+document.querySelectorAll('.gg-check').forEach(function (c) {
+  c.addEventListener('change', function () { if (c.checked) Giri.burst(c, 'drops'); });
+});
+</script>

@@ -1,0 +1,42 @@
+<!-- @dsCard group="Hành trình mọc cây" height=640 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col gg-forest">
+  <div class="gg-talk"><span id="giri"></span><span id="say"></span></div>
+  <div class="gg-plantbox" id="pot"></div>
+  <div class="gg-card">
+    <div class="gg-card__row"><p class="gg-label" id="lv"></p><span class="gg-chip" id="pct"></span></div>
+    <div class="gg-progress gg-progress--lg" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Cấp độ của cây"><div class="gg-progress__fill"></div></div>
+    <button class="gg-btn gg-btn--lg" id="water"><span class="gg-drop"></span><span id="water-text">Tưới cây</span></button>
+  </div>
+</div>
+<script>
+var stage = 0, busy = false, kinds = Object.keys(Giri.kinds), k = 11;
+var lines = ['Hạt của hôm nay đây. Xong việc đầu tiên là có nước tưới!', 'Mầm nhú lên rồi kìa!', 'Cây non cứng cáp hơn rồi đó.', 'Cây cao gần bằng cổ mình rồi!', 'Hoa nở rồi, sắp có trái.', 'Xong hết việc hôm nay rồi! Mang cây ra khu đất thôi.'];
+var $ = function (id) { return document.getElementById(id); };
+function draw(grown, mood) {
+  $('pot').innerHTML = Giri.plant(stage, kinds[k], 170);
+  if (grown) $('pot').firstChild.classList.add('is-grown');
+  $('giri').innerHTML = Giri.mascot(mood || (stage === 5 ? 'cheer' : 'happy'), 120);
+  $('say').innerHTML = '<p class="gg-bubble"><span class="gg-tag">Giri</span>' + lines[stage] + '</p>';
+  $('lv').textContent = Giri.kinds[kinds[k]] + ' · cấp ' + stage + ' · ' + Giri.stages[stage];
+  $('pct').textContent = stage * 20 + '%';
+  $('bar').firstElementChild.style.setProperty('--value', stage * 20 + '%');
+  $('bar').setAttribute('aria-valuenow', stage * 20);
+  $('water-text').textContent = stage === 5 ? 'Trồng vào khu đất' : 'Tưới cây';
+}
+$('water').addEventListener('click', function () {
+  if (busy) return;
+  if (stage === 5) { stage = 0; k = (k + 1) % kinds.length; draw(false); return; }
+  busy = true;
+  $('giri').innerHTML = Giri.mascot('munch', 120);
+  Giri.rain($('pot'));
+  setTimeout(function () {
+    stage++;
+    draw(true, 'cheer');
+    if (stage < 5) setTimeout(function () { if (!busy) $('giri').innerHTML = Giri.mascot('happy', 120); }, 1800);
+    if (stage === 5) Giri.burst($('pot'), 'confetti');
+    busy = false;
+  }, 520);
+});
+draw(false);
+</script>

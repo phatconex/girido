@@ -1,0 +1,17 @@
+<!-- @dsCard group="Điều hướng" height=110 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage">
+  <div class="gg-tabs" role="tablist" aria-label="Lọc việc">
+    <button class="gg-tab" role="tab" id="tab-doing" aria-selected="true">Đang làm</button>
+    <button class="gg-tab" role="tab" id="tab-done" aria-selected="false">Đã xong</button>
+    <button class="gg-tab" role="tab" id="tab-garden" aria-selected="false">Khu vườn</button>
+  </div>
+</div>
+<script>
+var tabs = document.querySelectorAll('.gg-tab');
+tabs.forEach(function (t) {
+  t.addEventListener('click', function () {
+    tabs.forEach(function (o) { o.setAttribute('aria-selected', o === t ? 'true' : 'false'); });
+  });
+});
+</script>

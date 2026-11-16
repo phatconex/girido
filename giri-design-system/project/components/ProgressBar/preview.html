@@ -1,0 +1,17 @@
+<!-- @dsCard group="Tiến độ" height=200 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col">
+  <div class="gg-card__row"><p class="gg-label">Cấp 2 · Cây non</p><span class="gg-chip" id="pct">40%</span></div>
+  <div class="gg-progress gg-progress--lg" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-label="Tiến độ của cây" id="bar"><div class="gg-progress__fill" style="--value:40%"></div></div>
+  <div class="gg-progress gg-progress--leaf" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="75" aria-label="Công việc đã xong"><div class="gg-progress__fill" style="--value:75%"></div></div>
+  <div><button class="gg-btn gg-btn--ghost" id="more">Thêm 20%</button></div>
+</div>
+<script>
+var v = 40, bar = document.getElementById('bar');
+document.getElementById('more').addEventListener('click', function () {
+  v = v >= 100 ? 0 : v + 20;
+  bar.firstElementChild.style.setProperty('--value', v + '%');
+  bar.setAttribute('aria-valuenow', v);
+  document.getElementById('pct').textContent = v + '%';
+});
+</script>

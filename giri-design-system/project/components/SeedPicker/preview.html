@@ -1,0 +1,25 @@
+<!-- @dsCard group="Khu vườn" height=520 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col">
+  <div class="gg-tabs" role="tablist" aria-label="Nhóm cây" id="groups" style="align-self:flex-start"></div>
+  <div class="gg-card gg-card--panel">
+    <span class="gg-tag">Hôm nay trồng cây gì?</span>
+    <div class="gg-card__paper"><div class="gg-seeds" id="seeds"></div></div>
+  </div>
+</div>
+<script>
+var group = 0, chosen = 'sen';
+function draw() {
+  var tabs = '', html = '';
+  Giri.groups.forEach(function (g, i) { tabs += '<button class="gg-tab" role="tab" id="group-' + g.key + '" aria-selected="' + (i === group) + '">' + g.name + '</button>'; });
+  Giri.groups[group].kinds.forEach(function (k) {
+    html += '<div class="gg-seed"><button class="gg-frame" id="seed-' + k + '" aria-pressed="' + (k === chosen) + '" aria-label="' + Giri.kinds[k] + '">' + Giri.plant(5, k, 58, true) + '</button>' + Giri.kinds[k] + '</div>';
+  });
+  document.getElementById('groups').innerHTML = tabs;
+  document.getElementById('seeds').innerHTML = html;
+  document.querySelectorAll('.gg-tab').forEach(function (b, i) { b.addEventListener('click', function () { group = i; draw(); }); });
+  document.querySelectorAll('.gg-frame').forEach(function (b) { b.addEventListener('click', function () { chosen = b.id.slice(5); draw(); }); });
+}
+group = 1;
+draw();
+</script>

@@ -1,0 +1,11 @@
+/* bản thử 3D: cảnh WebGL phủ kín phía sau, giao diện giữ nguyên bảng và thanh trạng thái */
+body { background: linear-gradient(#cfe8fb, #eef7fd 55%, #f7fbfe); background-attachment: fixed; }
+.mk-gl { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; }
+.mk-app { pointer-events: none; }
+.mk-app > * { pointer-events: auto; }
+.mk-hud__top .gg-plant { display: none; }
+.mk-say { position: fixed; z-index: 2; left: 20%; top: 40%; width: 0; height: 0; pointer-events: none; }
+.mk-say .gg-bubble { position: absolute; left: -40px; bottom: 14px; width: max-content; max-width: 280px; margin: 0; }
+.mk-hint { position: fixed; z-index: 2; left: max(24px, 3vw); bottom: var(--space-5); margin: 0; padding: 6px 12px; border-radius: var(--radius-pill); background: var(--surface); color: var(--ink-soft); font: 700 13px/18px var(--font-body); box-shadow: var(--shadow-card); }
+.mk-app--wide .mk-say, .mk-app--wide .mk-hint { display: none; }
+@media (max-width: 1080px) { .mk-app { padding-top: 46vh; } .mk-hud { margin-top: 0; } .mk-hint { display: none; } }

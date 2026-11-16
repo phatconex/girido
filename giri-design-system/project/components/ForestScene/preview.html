@@ -1,0 +1,16 @@
+<!-- @dsCard group="Bề mặt" height=380 -->
+<style>body{margin:0}.scene{min-height:360px;padding:var(--space-6) var(--space-5) var(--space-5);display:flex;flex-direction:column;justify-content:space-between}</style>
+<div class="gg gg-forest scene">
+  <span class="gg-cloud" style="left:8%;top:28px"></span>
+  <span class="gg-cloud" style="left:62%;top:64px;animation-delay:-6s"></span>
+  <span class="gg-cloud" style="left:36%;top:120px;transform:scale(.7);animation-delay:-3s"></span>
+  <p class="gg-display">Khu rừng của bạn</p>
+  <div class="gg-forest__trees" id="trees"></div>
+  <div class="gg-talk"><span id="g"></span><p class="gg-bubble"><span class="gg-tag">Giri</span>Rừng hôm nay mát ghê. Mình tưới cây nào trước?</p></div>
+</div>
+<script>
+var set = [['thong', 4, 96], ['xoai', 5, 120], ['huongduong', 5, 80], ['phuong', 4, 110]], html = '';
+set.forEach(function (s) { html += Giri.plant(s[1], s[0], s[2]); });
+document.getElementById('trees').innerHTML = html;
+document.getElementById('g').innerHTML = Giri.mascot('happy', 120);
+</script>

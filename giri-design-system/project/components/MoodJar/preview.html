@@ -1,0 +1,27 @@
+<!-- @dsCard group="Lọ cảm xúc" height=620 -->
+<style>body{margin:0}</style>
+<div class="gg gg-stage gg-stage--col">
+  <div class="gg-plantbox" id="jar"></div>
+  <div class="gg-card">
+    <div class="gg-card__row"><p class="gg-label">Hôm nay bạn thấy thế nào?</p><span class="gg-chip" id="count"></span></div>
+    <div class="gg-moods" id="moods"></div>
+  </div>
+</div>
+<script>
+var month = [4, 5, 3, 4, 2, 4, 5, 5, 3, 1, 4, 4, 3], picked = false, html = '';
+Giri.feelings.forEach(function (n, i) {
+  html += '<button class="gg-mood" id="mood-' + (i + 1) + '" aria-pressed="false">' + Giri.orb(i + 1, 44) + n + '</button>';
+});
+document.getElementById('moods').innerHTML = html;
+var jar = Giri.jarLive(document.getElementById('jar'), month, 220);
+function count() { document.getElementById('count').textContent = 'Tháng 11 · ' + jar.count() + ' viên'; }
+document.querySelectorAll('.gg-mood').forEach(function (b, i) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.gg-mood').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    if (picked) jar.setLast(i + 1); else jar.add(i + 1);
+    picked = true;
+    count();
+  });
+});
+count();
+</script>
