@@ -5,7 +5,7 @@ import GG from '../lib/logic';
 import type { Project, Work } from '../lib/logic';
 import { useApp } from '../app-context';
 import { useDialogs } from '../dialogs';
-import { Progress, fmtShort } from '../ui';
+import { Icon, Progress, fmtShort } from '../ui';
 
 const ROW = 50, X = [0, 262, 572];
 const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
@@ -114,20 +114,20 @@ export default function Projects() {
       <section className="mk-sec">
         <div className="mk-head">
           <p className="mk-h1 mk-grow">Project</p>
-          <div className="mk-row">
-            {st.projects.map((q) => (
-              <button className={'gg-btn ' + (q.id === p.id ? '' : 'gg-btn--ghost ') + 'mk-mini'} id={'proj-' + q.id} key={q.id} type="button" aria-pressed={q.id === p.id} onClick={() => go('#project-' + q.id)}>
-                {q.name} · {GG.projectStats(st, q.id).pct}%
-              </button>
-            ))}
-            <button className="gg-btn gg-btn--ghost mk-mini" id="proj-new" type="button" onClick={newProject}>+ Project mới</button>
+          <div className="mk-tools">
+            <button className="mk-tool" id="rename-project" type="button" onClick={renameProject}><Icon name="edit" />Đổi tên</button>
+            <button className="mk-tool mk-tool--danger" id="delete-project" type="button" onClick={deleteProject}><Icon name="trash" />Xóa</button>
           </div>
         </div>
-        <div className="mk-row">
-          <p className="gg-muted mk-grow">Bấm vòng tròn để tick xong, bấm chữ để sửa. Đường nối chuyển xanh khi việc đã xong.</p>
-          <button className="gg-btn gg-btn--ghost mk-mini" id="rename-project" type="button" onClick={renameProject}>Đổi tên</button>
-          <button className="gg-btn gg-btn--clay mk-mini" id="delete-project" type="button" onClick={deleteProject}>Xóa project</button>
+        <div className="mk-ptabs" role="group" aria-label="Chọn project">
+          {st.projects.map((q) => (
+            <button className={'mk-ptab' + (q.id === p.id ? ' is-on' : '')} id={'proj-' + q.id} key={q.id} type="button" aria-pressed={q.id === p.id} onClick={() => go('#project-' + q.id)}>
+              <span className="mk-ptab__name">{q.name}</span><span className="mk-ptab__pct">{GG.projectStats(st, q.id).pct}%</span>
+            </button>
+          ))}
+          <button className="mk-ptab mk-ptab--new" id="proj-new" type="button" onClick={newProject}><Icon name="plus" />Project mới</button>
         </div>
+        <p className="gg-muted">Bấm vòng tròn để tick xong, bấm chữ để sửa. Đường nối chuyển xanh khi việc đã xong.</p>
       </section>
       <div className="mk-mindwrap">
         <div className="mk-mind" style={{ height }}>

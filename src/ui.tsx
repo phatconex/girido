@@ -12,6 +12,8 @@ const ICONS = {
   next: '<path d="M10 6l6 6-6 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>',
+  trash: '<path d="M5 7h14M10 7V4.5h4V7M7 7l1 12.5h8L17 7M10.5 11v5M13.5 11v5"/>',
 };
 export type IconName = keyof typeof ICONS;
 
