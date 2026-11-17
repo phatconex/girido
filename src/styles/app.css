@@ -466,3 +466,12 @@ button.mk-pomo__time { padding: 0; border: 0; background: none; color: inherit; 
   .ga-dialog__box { max-height: calc(100dvh - 24px); }
   .mk-welcome__art { min-height: 150px; }
 }
+
+/* ---- mindmap: nút công việc luôn cao đúng 76px (tên tối đa hai dòng), để các nhánh không dính vào nhau ---- */
+.mk-mind .gg-work { margin-left: 0; }                 /* bỏ kiểu so le của danh sách công việc trong design system */
+.mk-work { min-height: 76px; }
+.mk-work .gg-work__name { display: flex; flex-direction: column; justify-content: center; min-height: 76px; box-sizing: border-box; }
+.mk-work__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+@media (max-width: 640px) { .mk-work__title { -webkit-line-clamp: 4; } }
+/* ô việc trong mindmap dài theo chỗ trống của bảng (từ 380 tới 620px), để việc tên dài đỡ bị cắt */
+@media (min-width: 641px) { .mk-mind .mk-leaf:not(.mk-leaf--add) { width: max(380px, min(620px, calc(100% - 590px))); } }

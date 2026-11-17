@@ -8,6 +8,8 @@ import { useDialogs } from '../dialogs';
 import { Icon, Progress, fmtShort } from '../ui';
 
 const ROW = 50, X = [0, 262, 572];
+/** Chiều cao tối thiểu của một nhánh: đủ chỗ cho nút công việc có tên dài hai dòng, để hai nhánh ít việc không đè lên nhau. */
+const BRANCH_MIN = 96;
 const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
 const at = (x: number, top: number): CSSProperties => ({ left: x, top });
 
@@ -79,6 +81,10 @@ export default function Projects() {
     const todos = b.list.slice().sort((a, b2) => (a.date < b2.date ? -1 : a.date > b2.date ? 1 : 0));
     // việc đã xong nhiều thì gộp thành một lá, để nhánh không dài lê thê
     const doneList = todos.filter((t) => t.done), fold = doneList.length > 3 && !open[w.id];
+    // số dòng lá của nhánh này (gộp việc đã xong, từng việc, nút thêm việc); nhánh ít lá thì các lá nằm giữa khoảng cao tối thiểu
+    const rows = (doneList.length > 3 ? 1 : 0) + (fold ? todos.length - doneList.length : todos.length) + 1;
+    const block = Math.max(rows * ROW, BRANCH_MIN);
+    y = top + (block - rows * ROW) / 2;
     if (doneList.length > 3) {
       nodes.push(
         <button className="mk-node mk-leaf is-done" id={'fold-' + w.id} key={'fold-' + w.id} type="button" aria-expanded={!fold} style={at(X[2], y)} onClick={() => setOpen((o) => ({ ...o, [w.id]: fold }))}>
@@ -94,30 +100,30 @@ export default function Projects() {
       nodes.push(
         <div className={'mk-node mk-leaf' + (t.done ? ' is-done' : '')} key={t.id} style={at(X[2], y)}>
           <button className="mk-leaf__dot" id={'leaf-' + t.id} type="button" aria-pressed={t.done} aria-label={(t.done ? 'Bỏ tick: ' : 'Xong: ') + t.text} onClick={(e) => tick(t, e.currentTarget)}>{t.done ? '✓' : ''}</button>
-          <button className="mk-leaf__text" id={'leaf-edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} onClick={() => editTodo(t)}>{t.text}{t.subs?.length ? ' (' + t.subs.filter((s) => s.done).length + '/' + t.subs.length + ')' : ''}</button>
+          <button className="mk-leaf__text" id={'leaf-edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} title={t.text} onClick={() => editTodo(t)}>{t.text}{t.subs?.length ? ' (' + t.subs.filter((s) => s.done).length + '/' + t.subs.length + ')' : ''}</button>
           <span className={'gg-chip' + (isNow ? ' gg-chip--sun' : late ? ' gg-chip--ember' : '')}>{isNow ? 'Hôm nay' : (late ? 'Trễ ' : '') + fmtShort(t.date)}</span>
         </div>,
       );
       cys.push({ cy: y + 20, done: t.done }); y += ROW;
     });
     nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id={'add-leaf-' + w.id} key={'add-' + w.id} type="button" style={at(X[2], y)} onClick={() => addLeaf(b.work)}>+ Thêm việc</button>);
-    y += ROW;
-    const wy = (top + y - ROW) / 2 + 20, cls = ws.status === 'done' ? ' is-done' : ws.status === 'now' ? ' is-now' : '';
+    y = top + block;
+    const wy = top + block / 2 - 5, cls = ws.status === 'done' ? ' is-done' : ws.status === 'now' ? ' is-now' : '';
     const work = b.work;
     nodes.splice(head, 0, work ? (
-      <button className={'mk-node mk-work gg-work' + cls} id={'work-' + w.id} key={w.id} type="button" aria-label={'Sửa công việc ' + work.name} style={at(X[1], wy - 28)} onClick={() => editWork(work, ws.total)}>
+      <button className={'mk-node mk-work gg-work' + cls} id={'work-' + w.id} key={w.id} type="button" aria-label={'Sửa công việc ' + work.name} style={at(X[1], wy - 38)} title={work.name} onClick={() => editWork(work, ws.total)}>
         <span className="gg-work__num">{pad2(wi + 1)}</span>
-        <span className="gg-work__name">{work.name}<span className="gg-work__meta">{ws.done} / {ws.total} việc</span></span>
+        <span className="gg-work__name"><span className="mk-work__title">{work.name}</span><span className="gg-work__meta">{ws.done} / {ws.total} việc</span></span>
       </button>
     ) : (
-      <div className={'mk-node mk-work mk-work--direct gg-work' + cls} id="work-direct" key={w.id} style={at(X[1], wy - 28)}>
+      <div className={'mk-node mk-work mk-work--direct gg-work' + cls} id="work-direct" key={w.id} style={at(X[1], wy - 38)}>
         <span className="gg-work__num">✓</span>
-        <span className="gg-work__name">Việc chung<span className="gg-work__meta">{ws.done} / {ws.total} việc · thẳng trong project</span></span>
+        <span className="gg-work__name"><span className="mk-work__title">Việc chung</span><span className="gg-work__meta">{ws.done} / {ws.total} việc · thẳng trong project</span></span>
       </div>
     ));
     cys.forEach((c) => links.push({ done: c.done, d: 'M' + (X[1] + 250) + ' ' + wy + ' C' + (X[1] + 290) + ' ' + wy + ' ' + (X[2] - 44) + ' ' + c.cy + ' ' + X[2] + ' ' + c.cy }));
     centers.push({ y: wy, done: ws.status === 'done' });
-    y += 20;
+    y += 12;
   });
   nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id="add-work" key="add-work" type="button" style={at(X[1], y)} onClick={addWork}>+ Thêm công việc</button>);
   if (!showDirect) nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id="add-direct" key="add-direct" type="button" style={at(X[1] + 176, y)} onClick={() => addLeaf()}>+ Thêm việc chung</button>);
