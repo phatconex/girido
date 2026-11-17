@@ -155,6 +155,7 @@ export default function Shell({ store, account }: { store: Store; account: Accou
   const todayRef = useRef(today);
   const [pulse, setPulse] = useState<Pulse>({ mood: null, rain: 0 });
   const [fresh, setFresh] = useState<AppCtx['fresh']>(null);
+  const [placing, setPlacing] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const syncDay = useCallback(() => {
@@ -185,6 +186,8 @@ export default function Shell({ store, account }: { store: Store; account: Accou
 
   // đổi màn hình: đóng hộp thoại, cuộn lên đầu
   useEffect(() => { dialogs.close(); window.scrollTo(0, 0); }, [hash, dialogs]);
+  // rời khu đất của tháng này thì thôi chọn chỗ trồng
+  useEffect(() => { if (route.name !== 'khu-vuon' || route.params) setPlacing(false); }, [route.name, route.params]);
 
   const ctx = useMemo<AppCtx>(() => {
     const planted = () => !!store.state().days[todayRef.current]?.planted;
@@ -214,14 +217,22 @@ export default function Shell({ store, account }: { store: Store; account: Accou
         setTimeout(() => setPulse((p) => ({ ...p, mood: null })), 2700),
       ];
     };
-    return { state: snap.state, status: snap.status, store, today, params: route.params, account, go, apply, tick, editTodo, syncDay, fresh };
-  }, [snap, store, today, route.params, account, dialogs, syncDay, fresh]);
+    const plantAt = (slot?: number) => {
+      setPlacing(false);
+      if (syncDay()) return;                                // đã sang ngày mới: không trồng vào ngày cũ
+      const day = todayRef.current;
+      if (!GG.canPlant(store.state(), day, day).ok) return;
+      setFresh({ date: day, at: Date.now() });
+      store.apply((s) => GG.plant(s, day, day, slot));
+    };
+    return { state: snap.state, status: snap.status, store, today, params: route.params, account, go, apply, tick, editTodo, syncDay, fresh, placing, plantAt };
+  }, [snap, store, today, route.params, account, dialogs, syncDay, fresh, placing]);
 
+  // bấm trồng: sang khu đất của tháng này để chọn ô, cây chỉ được trồng khi đã chọn chỗ
   const plantToday = () => {
-    if (syncDay()) return;                                  // đã sang ngày mới: không trồng vào ngày cũ
-    setFresh({ date: today, at: Date.now() });
-    store.apply((s) => GG.plant(s, today, today));
+    if (syncDay()) return;
     go('#khu-vuon');
+    setPlacing(true);
   };
   const changeKind = (kind: string) => {
     dialogs.sheet('Hôm nay trồng cây gì?', <SeedPicker kind={kind} onPick={(k) => { dialogs.close(); store.apply((s) => GG.setKind(s, today, k)); }} />);

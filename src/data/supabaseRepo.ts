@@ -40,7 +40,7 @@ export function createSupabaseRepo(db: SupabaseClient, userId: string): Repo {
         all<Rows['projects'][number]>('projects', 'id,name,created_on,pos', ['created_at', 'pos', 'id']),
         all<Rows['works'][number]>('works', 'id,project_id,name,sort', ['sort', 'id']),
         all<Rows['todos'][number]>('todos', 'id,work_id,project_id,text,date,done,done_at,pomos,subs,pos', ['created_at', 'pos', 'id']),
-        all<Rows['days'][number]>('days', 'date,kind,planted,mood', ['date']),
+        all<Rows['days'][number]>('days', 'date,kind,planted,mood,slot', ['date']),
         all<Rows['notes'][number]>('notes', 'id,body,pinned,noted_at,edited_at,pos', ['created_at', 'pos', 'id']),
       ]);
       return fromRows({ projects, works, todos, days, notes });

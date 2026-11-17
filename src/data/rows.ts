@@ -7,7 +7,7 @@ export interface WorkRow { id: string; project_id: string; name: string; sort: n
 /** `work_id` null: việc không nằm trong công việc nào; khi đó `project_id` có giá trị là việc nằm thẳng trong project, null là việc lẻ. */
 export interface TodoRow { id: string; work_id: string | null; project_id: string | null; text: string; date: string; done: boolean; done_at: string | null; pomos: number; subs: Sub[]; pos: number }
 export interface NoteRow { id: string; body: string; pinned: boolean; noted_at: string; edited_at: string; pos: number }
-export interface DayRow { date: string; kind: string | null; planted: boolean; mood: number | null }
+export interface DayRow { date: string; kind: string | null; planted: boolean; mood: number | null; slot: number | null }
 export interface Rows { projects: ProjectRow[]; works: WorkRow[]; todos: TodoRow[]; days: DayRow[]; notes: NoteRow[] }
 
 export interface Change<T> { upsert: T[]; remove: string[] }
@@ -25,7 +25,7 @@ export function toRows(st: State): Rows {
   }));
   const days = Object.keys(st.days).sort().map((date): DayRow => {
     const d: Day = st.days[date];
-    return { date, kind: d.kind ?? null, planted: !!d.planted, mood: d.mood ?? null };
+    return { date, kind: d.kind ?? null, planted: !!d.planted, mood: d.mood ?? null, slot: d.slot ?? null };
   });
   const notes = (st.notes || []).map((n: Note, i): NoteRow => ({ id: n.id, body: n.text, pinned: !!n.pinned, noted_at: n.createdAt, edited_at: n.updatedAt, pos: i }));
   return { projects, works, todos, days, notes };
@@ -54,6 +54,7 @@ export function fromRows(rows: Rows): State {
     if (r.kind) d.kind = r.kind;
     if (r.planted) d.planted = true;
     if (r.mood != null) d.mood = r.mood;
+    if (r.slot != null) d.slot = r.slot;
     days[r.date] = d;
   });
   const notes = (rows.notes || []).map((n): Note => {

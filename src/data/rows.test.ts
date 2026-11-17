@@ -52,7 +52,7 @@ test('thêm việc, đổi tên công việc, trồng cây và chọn cảm xúc
   expect(c.todos.upsert).toHaveLength(1);
   expect(c.todos.upsert[0]).toMatchObject({ text: 'mới', work_id: 'w2', pos: 3 });
   expect(c.works.upsert).toEqual([{ id: 'w2', project_id: 'p1', name: 'Đổi tên', sort: 2 }]);
-  expect(c.days.upsert).toEqual([{ date: '2026-11-15', kind: null, planted: false, mood: 5 }]);
+  expect(c.days.upsert).toEqual([{ date: '2026-11-15', kind: null, planted: false, mood: 5, slot: null }]);
   expect(c.projects.upsert).toEqual([]);
 });
 

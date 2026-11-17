@@ -339,3 +339,20 @@ textarea.gg-input.mk-note__area { height: auto; min-height: 96px; padding: var(-
 .mk-note__foot .mk-tool { width: 36px; height: 36px; padding: 0; justify-content: center; }
 .mk-note__foot .mk-tool[aria-pressed="true"] { color: var(--sun-text); }
 @media (max-width: 720px) { .mk-tab { padding-inline: var(--space-2); font-size: 13px; } }
+
+/* ---- khu đất: chọn ô để trồng, sắp xếp lại cây ---- */
+.mk-plotbar { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--sun-100); }
+.mk-plotbar .gg-muted { color: var(--sun-text); font-weight: 700; }
+.gg-pl-slot.is-pick { fill: var(--sun-400); opacity: 1; stroke: transparent; stroke-width: 12; pointer-events: all; cursor: pointer; transform-box: fill-box; transform-origin: center; animation: gg-pulse 1.4s ease-in-out infinite; }
+.gg-pl-slot.is-pick:hover { fill: var(--leaf-500); }
+.mk-plot .gg-pl-tree { cursor: pointer; }
+.mk-plot.is-arranging .gg-pl-tree.is-selected .gg-pl-pop { animation: mk-wiggle 0.5s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.mk-plot.is-arranging .gg-pl-tree.is-selected .gg-t-shade { fill: var(--sun-400); opacity: 0.9; }
+@keyframes mk-wiggle { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@media (prefers-reduced-motion: reduce) { .gg-pl-slot.is-pick, .mk-plot.is-arranging .gg-pl-tree.is-selected .gg-pl-pop { animation: none; } }
+
+/* ---- lọ cảm xúc cầm lắc được ---- */
+.mk-jar { padding: var(--space-6) 0 var(--space-2); }
+.mk-jar .gg-jar.is-shakable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; }
+.mk-jar .gg-jar.is-held { cursor: grabbing; }
+.mk-jar__hint { text-align: center; }

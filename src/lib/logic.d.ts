@@ -5,7 +5,9 @@ export interface Sub { id: string; text: string; done: boolean }
     `pomos`: số pomodoro đã xong. `subs`: các mục con. */
 export interface Todo { id: string; workId: string; projectId?: string; text: string; date: string; done: boolean; doneAt: string | null; pomos?: number; subs?: Sub[] }
 export interface Note { id: string; text: string; createdAt: string; updatedAt: string; pinned?: boolean }
-export interface Day { kind?: string; planted?: boolean; mood?: number }
+/** `slot`: ô trên khu đất của tháng mà cây ngày này đứng (0 đến SLOTS - 1); không có thì app tự xếp. */
+export interface Day { kind?: string; planted?: boolean; mood?: number; slot?: number }
+export interface PlotCell { day: number; kind: string }
 export interface State { projects: Project[]; todos: Todo[]; days: Record<string, Day>; notes: Note[] }
 export interface Progress { total: number; done: number; pct: number }
 export type PlantReason = 'ok' | 'no-todos' | 'remaining' | 'planted' | 'past' | 'future';
@@ -30,7 +32,11 @@ declare const GG: {
   stageFor(pct: number, total: number): number;
   kindFor(st: State, date: string): string;
   canPlant(st: State, date: string, today: string): { ok: boolean; reason: PlantReason; remaining: number };
-  plant(st: State, date: string, today: string): State;
+  SLOTS: number;
+  isSlot(n: unknown): n is number;
+  monthLayout(st: State, mk: string): (PlotCell | null)[];
+  plant(st: State, date: string, today: string, slot?: number): State;
+  moveTree(st: State, mk: string, from: number, to: number): State;
   settleToday(st: State, today: string): State;
   streak(st: State, today: string): number;
   monthDays(st: State, mk: string): (string | null)[];

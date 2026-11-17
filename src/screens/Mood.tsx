@@ -4,6 +4,14 @@ import GG from '../lib/logic';
 import Giri, { type LiveJar } from '../lib/giri';
 import { useApp } from '../app-context';
 import { Html, IconBtn, fmtMonth } from '../ui';
+import { prefs } from '../timers/prefs';
+import { clink, unlock } from '../timers/sound';
+
+// lắc lọ: mỗi lần viên chạm thành lọ đủ mạnh thì kêu một tiếng (theo công tắc Âm báo và âm lượng trong Cài đặt)
+const JAR_OPTS = {
+  onGrab: unlock,
+  onClink: (strength: number) => { const p = prefs.get(); if (p.sound) clink(strength, p.volume); },
+};
 
 export default function Mood() {
   const { state: st, today, params, go, apply, syncDay } = useApp();
@@ -16,7 +24,7 @@ export default function Mood() {
   useLayoutEffect(() => {
     if (!el.current || shown.current === want) return;
     el.current.textContent = '';
-    jar.current = Giri.jarLive(el.current, moods, 240);
+    jar.current = Giri.jarLive(el.current, moods, 240, JAR_OPTS);
     shown.current = want;
   });
 
@@ -39,6 +47,7 @@ export default function Mood() {
           <IconBtn name="next" label="Tháng sau" id="mood-next" cls="gg-btn--ghost mk-navbtn" disabled={mk >= nowMk} onClick={() => go('#cam-xuc-' + GG.shiftMonth(mk, 1))} />
         </div>
         <div className="mk-jar" id="mood-jar" ref={el} />
+        {moods.length > 0 && <p className="gg-muted mk-jar__hint">Cầm lọ kéo qua lại để lắc, các viên sẽ kêu leng keng.</p>}
       </section>
       <section className="mk-sec">
         <p className="mk-group">{current ? 'Hôm nay bạn thấy thế nào?' : 'Cảm xúc của tháng'}</p>

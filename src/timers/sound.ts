@@ -128,6 +128,20 @@ export function chime(kind: Chime, style = 'chime', volume = 70) {
   setTimeout(() => out.disconnect(), 4000);
 }
 
+/** Tiếng leng keng khi các viên trong lọ cảm xúc va vào thành lọ: một tiếng thủy tinh rất ngắn, cao độ đổi nhẹ mỗi lần. */
+export function clink(strength: number, volume = 70) {
+  const c = audio();
+  if (!c || volume <= 0 || c.state !== 'running') return;
+  const t = c.currentTime, base = 2100 + Math.random() * 1500, peak = Math.max(0.02, Math.min(0.3, 0.3 * strength)) * Math.pow(volume / 100, 2) * 2;
+  const out = c.createGain();
+  out.gain.value = 1;
+  out.connect(c.destination);
+  tone(c, out, 'sine', base, t, t + 0.16, peak, 0.002);
+  tone(c, out, 'sine', base * 2.42, t, t + 0.08, peak * 0.45, 0.002);
+  tone(c, out, 'triangle', base * 0.5, t, t + 0.05, peak * 0.3, 0.002);
+  setTimeout(() => out.disconnect(), 400);
+}
+
 /** Thông báo của hệ điều hành, chỉ hiện khi tab đang bị che và người dùng đã cho phép. */
 export function notify(title: string, body: string) {
   try {

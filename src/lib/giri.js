@@ -305,25 +305,27 @@
       '" role="img" aria-label="' + KINDS[kind] + ': ' + STAGES[stage] + '">' + (bare ? '' : BASE) + '<g class="gg-p-grow">' + plantBody(stage, kind) + '</g></svg>';
   }
 
-  /* plot(days, opts): one month as an isometric plot. days[i] is the kind planted on day i + 1, or null.
-     opts: today (day number to mark), fresh (day number that just got planted, pops in), size. */
-  function plot(days, opts) {
+  /* plot(cells, opts): khu đất của một tháng, nhìn chéo từ trên xuống. cells: 36 ô, mỗi ô là null hoặc { day, kind }
+     (xem GG.monthLayout). opts: fresh (ngày vừa trồng, cây mọc lên có hiệu ứng), pick (ô trống bấm được để trồng hoặc dời cây tới),
+     selected (ô có cây đang được chọn để dời), size. Cây mang data-day và data-slot; ô trống mang data-slot. */
+  function plot(cells, opts) {
     opts = opts || {};
-    var T = 92, s = 0.44, cells = [], k;
+    var T = 92, s = 0.44, order = [], k, n = 0;
     var pt = function (dy) { return '180,' + (T + dy) + ' 348,' + (T + 84 + dy) + ' 180,' + (T + 168 + dy) + ' 12,' + (T + 84 + dy); };
     var out = '<polygon class="gg-pl-soil" points="' + pt(26) + '"/><polygon class="gg-pl-edge2" points="' + pt(17) + '"/><polygon class="gg-pl-edge1" points="' + pt(8) + '"/><polygon class="gg-pl-top" points="' + pt(0) + '"/>';
-    for (k = 0; k < days.length && k < 36; k++) cells.push({ k: k, i: k % 6, j: Math.floor(k / 6) });
-    cells.sort(function (a, b) { return (a.i + a.j) - (b.i + b.j); });
-    cells.forEach(function (c) {
-      var x = 180 + (c.i - c.j) * 28, y = T + 14 + (c.i + c.j) * 14, d = c.k + 1, kind = days[c.k];
-      if (kind && TREES[kind]) {
-        out += '<g class="gg-pl-tree' + (d === opts.fresh ? ' is-new' : '') + '" data-day="' + d + '" transform="translate(' + (x - 60 * s).toFixed(1) + ' ' + (y - 130 * s).toFixed(1) + ') scale(' + s + ')">' +
-          '<title>Ngày ' + d + ': ' + KINDS[kind] + '</title><ellipse class="gg-t-shade" cx="60" cy="131" rx="18" ry="5"/><g class="gg-pl-pop">' + plantBody(5, kind) + '</g></g>';
+    for (k = 0; k < 36; k++) order.push({ k: k, i: k % 6, j: Math.floor(k / 6) });
+    order.sort(function (a, b) { return (a.i + a.j) - (b.i + b.j); });
+    order.forEach(function (c) {
+      var x = 180 + (c.i - c.j) * 28, y = T + 14 + (c.i + c.j) * 14, cell = cells[c.k];
+      if (cell && TREES[cell.kind]) {
+        n++;
+        out += '<g class="gg-pl-tree' + (cell.day === opts.fresh ? ' is-new' : '') + (c.k === opts.selected ? ' is-selected' : '') + '" data-day="' + cell.day + '" data-slot="' + c.k + '" transform="translate(' + (x - 60 * s).toFixed(1) + ' ' + (y - 130 * s).toFixed(1) + ') scale(' + s + ')">' +
+          '<title>Ngày ' + cell.day + ': ' + KINDS[cell.kind] + '</title><ellipse class="gg-t-shade" cx="60" cy="131" rx="18" ry="5"/><g class="gg-pl-pop">' + plantBody(5, cell.kind) + '</g></g>';
       } else {
-        out += '<ellipse class="gg-pl-slot' + (d === opts.today ? ' is-today' : '') + '" data-day="' + d + '" cx="' + x + '" cy="' + y + '" rx="9" ry="4.5"/>';
+        out += '<ellipse class="gg-pl-slot' + (opts.pick ? ' is-pick' : '') + '" data-slot="' + c.k + '" cx="' + x + '" cy="' + y + '" rx="9" ry="4.5"/>';
       }
     });
-    var n = days.filter(function (v) { return v; }).length, size = opts.size || 360;
+    var size = opts.size || 360;
     return '<svg class="gg-plot" viewBox="0 0 360 300" width="' + size + '" height="' + Math.round(size * 300 / 360) + '" role="img" aria-label="Khu đất của tháng: ' + n + ' cây">' + out + '</svg>';
   }
 
@@ -383,11 +385,23 @@
       '<rect class="gg-j-lid" x="50" y="8" width="100" height="24" rx="8"/></svg>';
   }
 
-  /* jarLive(el, levels, size): the mood jar with real rolling orbs.
-     Returns { add(level), setLast(level), count() }. add() opens the lid, drops one orb in and closes it. */
-  function jarLive(el, levels, size) {
+  /* jarLive(el, levels, size, opts): the mood jar with real rolling orbs.
+     Returns { add(level), setLast(level), count() }. add() opens the lid, drops one orb in and closes it.
+     Cầm lọ kéo qua lại là lắc được: các viên văng theo quán tính. opts.onClink(mạnh 0..1) được gọi mỗi lần viên chạm thành lọ
+     hoặc chạm nhau đủ mạnh trong lúc lắc, để bên ngoài phát tiếng leng keng. */
+  function jarLive(el, levels, size, opts) {
     size = size || 200;
+    opts = opts || {};
     var R = 13, G = 0.5, balls = [], raf = 0, calm = 0, started = 0, seed = 11;
+    var jx = 0, jy = 0, tx = 0, ty = 0, drag = null, loudUntil = 0, lastClink = 0;      // lọ đang lệch bao nhiêu, và đang bị kéo tới đâu
+    function hit(v) {
+      var now;
+      if (!opts.onClink || v < 1.8) return;
+      now = performance.now();
+      if (now > loudUntil || now - lastClink < 60) return;
+      lastClink = now;
+      opts.onClink(Math.min(1, v / 10));
+    }
     var rnd = function () { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
     el.innerHTML = '<svg class="gg-jar" viewBox="0 -44 200 284" width="' + size + '" height="' + Math.round(size * 1.42) + '" role="img">' +
       '<path class="gg-j-body" d="M44 34 h112 q24 6 24 40 v120 q0 30 -30 30 h-100 q-30 0 -30 -30 v-120 q0 -34 24 -40z"/>' +
@@ -406,13 +420,15 @@
       if (d <= max) return;
       var nx = dx / d, ny = dy / d, vn = b.vx * nx + b.vy * ny;
       b.x = cx + nx * max; b.y = cy + ny * max;
-      if (vn > 0) { b.vx -= 1.4 * vn * nx; b.vy -= 1.4 * vn * ny; }
+      if (vn > 0) { hit(vn); b.vx -= 1.4 * vn * nx; b.vy -= 1.4 * vn * ny; }
     }
     function walls(b) {
       var neck = b.y < 70, lo = (neck ? 46 : 21.5) + R, hi = (neck ? 154 : 178.5) - R;
-      if (b.x < lo) { b.x = lo; if (b.vx < 0) b.vx *= -0.5; }
-      if (b.x > hi) { b.x = hi; if (b.vx > 0) b.vx *= -0.5; }
-      if (b.y > 222.5 - R) { b.y = 222.5 - R; if (b.vy > 0) b.vy *= -0.45; b.vx *= 0.97; }
+      if (b.x < lo) { b.x = lo; if (b.vx < 0) { hit(-b.vx); b.vx *= -0.5; } }
+      if (b.x > hi) { b.x = hi; if (b.vx > 0) { hit(b.vx); b.vx *= -0.5; } }
+      if (b.y > 222.5 - R) { b.y = 222.5 - R; if (b.vy > 0) { hit(b.vy); b.vy *= -0.45; } b.vx *= 0.97; }
+      if (b.y > 62) b.inside = true;                                   // đã rơi hẳn vào lọ
+      if (b.inside && b.y < 36 + R) { b.y = 36 + R; if (b.vy < 0) { hit(-b.vy); b.vy *= -0.45; } }   // nắp lọ: lắc mạnh cũng không văng ra ngoài
       corner(b, 50, 194); corner(b, 150, 194);
     }
     /* one physics step; returns how far everything moved */
@@ -429,7 +445,7 @@
             var d = Math.sqrt(d2) || 0.01, nx = dx / d, ny = dy / d, o = (2 * R - d) / 2;
             b.x -= nx * o; b.y -= ny * o; c.x += nx * o; c.y += ny * o;
             var rv = (c.vx - b.vx) * nx + (c.vy - b.vy) * ny;
-            if (rv < 0) { var imp = -1.3 * rv / 2; b.vx -= imp * nx; b.vy -= imp * ny; c.vx += imp * nx; c.vy += imp * ny; }
+            if (rv < 0) { hit(-rv); var imp = -1.3 * rv / 2; b.vx -= imp * nx; b.vy -= imp * ny; c.vx += imp * nx; c.vy += imp * ny; }
           }
           walls(b);
         }
@@ -454,12 +470,21 @@
       balls.forEach(function (b) { b.vx = 0; b.vy = 0; });
       draw();
     }
+    /* Lọ đi theo tay (hoặc trôi về chỗ cũ khi buông). Các viên có quán tính nên ở lại, rồi bị thành lọ đẩy đi. */
+    function moveJar() {
+      var k = drag ? 0.55 : 0.2, nx = jx + (tx - jx) * k, ny = jy + (ty - jy) * k, dx = nx - jx, dy = ny - jy, far = Math.abs(dx) + Math.abs(dy);
+      if (!drag && Math.abs(nx) + Math.abs(ny) < 0.05) { nx = 0; ny = 0; }
+      jx = nx; jy = ny;
+      if (far > 0.01) balls.forEach(function (b) { b.x -= dx; b.y -= dy; b.vx -= dx * 0.45; b.vy -= dy * 0.45; });
+      svg.style.transform = jx || jy ? 'translate(' + (jx * size / 200).toFixed(1) + 'px,' + (jy * size / 200).toFixed(1) + 'px) rotate(' + (jx * 0.22).toFixed(2) + 'deg)' : '';
+      return far;
+    }
     function tick(now) {
-      if (!started) started = now;
-      var moved = step();
+      if (!started || drag) started = now;
+      var shaken = moveJar(), moved = step();
       draw();
       calm = moved < 0.12 * balls.length ? calm + 1 : 0;
-      if (calm > 45 || now - started > 7000) { raf = 0; balls.forEach(function (b) { b.vx = 0; b.vy = 0; }); return; }
+      if (!drag && shaken < 0.01 && !jx && !jy && (calm > 45 || now - started > 7000)) { raf = 0; balls.forEach(function (b) { b.vx = 0; b.vy = 0; }); return; }
       raf = requestAnimationFrame(tick);
     }
     function run() { calm = 0; started = 0; if (!raf) raf = requestAnimationFrame(tick); }
@@ -470,6 +495,35 @@
     balls.forEach(function (b) { b.vx = 0; b.vy = 0; b.a = (rnd() - 0.5) * 50; });
     draw();
     var total = balls.length;
+
+    /* cầm lọ: kéo trong khoảng ±46 (ngang) và ±38 (dọc) đơn vị của hình */
+    if (!still()) {
+      svg.classList.add('is-shakable');
+      svg.addEventListener('pointerdown', function (e) {
+        if (e.button) return;
+        drag = { x: e.clientX, y: e.clientY, unit: 200 / (svg.getBoundingClientRect().width || size) };
+        loudUntil = Infinity;
+        try { svg.setPointerCapture(e.pointerId); } catch (err) { /* trình duyệt cũ: vẫn lắc được khi con trỏ còn trên lọ */ }
+        svg.classList.add('is-held');
+        if (opts.onGrab) opts.onGrab();
+        run();
+        e.preventDefault();
+      });
+      svg.addEventListener('pointermove', function (e) {
+        if (!drag) return;
+        tx = Math.max(-46, Math.min(46, (e.clientX - drag.x) * drag.unit));
+        ty = Math.max(-38, Math.min(38, (e.clientY - drag.y) * drag.unit));
+      });
+      var release = function () {
+        if (!drag) return;
+        drag = null; tx = 0; ty = 0;
+        loudUntil = performance.now() + 2200;                              // buông tay rồi các viên vẫn còn lăn và kêu thêm một lúc
+        svg.classList.remove('is-held');
+        run();
+      };
+      svg.addEventListener('pointerup', release);
+      svg.addEventListener('pointercancel', release);
+    }
 
     return {
       count: function () { return total; },

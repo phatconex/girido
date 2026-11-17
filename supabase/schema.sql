@@ -49,12 +49,14 @@ create table if not exists public.days (
   kind    text,
   planted boolean  not null default false,
   mood    smallint check (mood between 1 and 5),
+  slot    smallint check (slot between 0 and 35),   -- ô trên khu đất của tháng; null: app tự xếp
   primary key (user_id, date)
 );
 
 -- Project đã tạo bảng từ bản trước thì chỉnh ở đây.
 alter table public.todos add column if not exists pomos integer not null default 0 check (pomos >= 0);
 alter table public.todos alter column work_id drop not null;
+alter table public.days add column if not exists slot smallint check (slot between 0 and 35);
 alter table public.todos add column if not exists project_id text;
 alter table public.todos add column if not exists subs jsonb not null default '[]'::jsonb;
 do $$ begin

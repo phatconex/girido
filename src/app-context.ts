@@ -22,6 +22,10 @@ export interface AppCtx {
   syncDay(): boolean;
   /** Ngày vừa trồng cây, để khu đất cho cây đó mọc lên có hiệu ứng. */
   fresh: { date: string; at: number } | null;
+  /** true khi người dùng vừa bấm trồng cây và đang chọn ô trên khu đất. */
+  placing: boolean;
+  /** Trồng cây hôm nay vào ô `slot`; không đưa ô thì app tự xếp chỗ. */
+  plantAt(slot?: number): void;
 }
 
 export const AppContext = createContext<AppCtx | null>(null);

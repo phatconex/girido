@@ -53,9 +53,43 @@ const GG = {};
     return { ok: r === 'ok', reason: r, remaining: rem };
   };
   function setDay(st, date, patch) { var days = assign(st.days, {}); days[date] = assign(st.days[date] || {}, patch); return withState(st, { days: days }); }
-  GG.plant = function (st, date, today) {
+  /* ---- chỗ của từng cây trên khu đất của tháng ----
+     Khu đất có SLOTS ô. Ngày đã trồng có thể nhớ ô của nó (days[ngày].slot). Ngày chưa nhớ ô (cây trồng từ bản cũ,
+     hoặc trồng mà không chọn chỗ) thì đứng ở ô theo số ngày; ô đó có cây khác rồi thì lấy ô trống đầu tiên. */
+  GG.SLOTS = 36;
+  GG.isSlot = function (n) { return typeof n === 'number' && n === Math.floor(n) && n >= 0 && n < GG.SLOTS; };
+  GG.monthLayout = function (st, mk) {
+    var cells = [], rest = [], n = GG.daysInMonth(mk), i, date, d, k;
+    for (i = 0; i < GG.SLOTS; i++) cells.push(null);
+    for (i = 1; i <= n; i++) {
+      date = mk + '-' + pad(i); d = st.days[date];
+      if (!d || !d.planted) continue;
+      if (GG.isSlot(d.slot) && !cells[d.slot]) cells[d.slot] = { day: i, kind: d.kind || 'tron' };
+      else rest.push({ day: i, kind: d.kind || 'tron' });
+    }
+    rest.forEach(function (t) {
+      k = cells[t.day - 1] ? cells.indexOf(null) : t.day - 1;
+      if (k >= 0) cells[k] = t;
+    });
+    return cells;
+  };
+  /* Trồng cây của hôm nay. Có `slot` và ô đó còn trống thì cây đứng ở đó; không thì để app tự xếp. */
+  GG.plant = function (st, date, today, slot) {
+    var patch;
     if (!GG.canPlant(st, date, today).ok) return st;
-    return setDay(st, date, { kind: GG.kindFor(st, date), planted: true });
+    patch = { kind: GG.kindFor(st, date), planted: true };
+    if (GG.isSlot(slot) && !GG.monthLayout(st, GG.monthKey(date))[slot]) patch.slot = slot;
+    else if (st.days[date] && st.days[date].slot != null) patch.slot = undefined;      // ô nhớ từ lần trồng trước không còn dùng
+    return cleanDay(setDay(st, date, patch), date);
+  };
+  function cleanDay(st, date) { var d = st.days[date]; if (d && 'slot' in d && d.slot === undefined) delete d.slot; return st; }
+  /* Dời cây ở ô `from` sang ô `to` trong tháng `mk`; ô `to` đang có cây thì hai cây đổi chỗ cho nhau. */
+  GG.moveTree = function (st, mk, from, to) {
+    var cells = GG.monthLayout(st, mk), a = cells[from], b = cells[to], next;
+    if (!GG.isSlot(from) || !GG.isSlot(to) || from === to || !a) return st;
+    next = setDay(st, mk + '-' + pad(a.day), { slot: to });
+    if (b) next = setDay(next, mk + '-' + pad(b.day), { slot: from });
+    return next;
   };
   /* Hôm nay đã trồng mà vẫn còn việc chưa xong (vừa thêm việc, bỏ tick, hoặc mang việc trễ sang) thì cây quay về đang lớn.
      Ngày đã qua thì cây ở lại. Hôm nay không còn việc nào thì cây cũng ở lại. */
@@ -301,6 +335,7 @@ const GG = {};
       if (d.kind != null) { if (KINDS.indexOf(d.kind) < 0) return fail('Ngày ' + key + ' có loại cây lạ "' + d.kind + '".'); out.kind = d.kind; }
       if (d.planted != null) { if (typeof d.planted !== 'boolean') return fail('Ngày ' + key + ' có "planted" không phải true hoặc false.'); out.planted = d.planted; if (d.planted) trees++; }
       if (d.mood != null) { if (d.mood !== Math.floor(d.mood) || d.mood < 1 || d.mood > 5) return fail('Ngày ' + key + ' có mức cảm xúc ngoài khoảng 1 đến 5.'); out.mood = d.mood; }
+      if (d.slot != null) { if (!GG.isSlot(d.slot)) return fail('Ngày ' + key + ' có ô trồng cây ngoài khu đất.'); out.slot = d.slot; }
       days[key] = out;
     }
     for (i = 0; i < (o.notes || []).length; i++) {
