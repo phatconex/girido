@@ -8,6 +8,7 @@ const seed = (): State => ({
   projects: [{ id: 'p1', name: 'P', createdAt: D1, works: [{ id: 'w1', name: 'W', order: 1 }] }],
   todos: [{ id: 'a', workId: 'w1', text: 'a', date: D2, done: false, doneAt: null }],
   days: {},
+  notes: [],
 });
 const loose = (st: State) => st.todos.filter((t) => t.workId === '');
 

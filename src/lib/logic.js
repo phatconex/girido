@@ -9,7 +9,7 @@ const GG = {};
   function assign(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
   function withState(st, patch) { return assign(st, patch); }
 
-  GG.emptyState = function () { return { projects: [], todos: [], days: {} }; };
+  GG.emptyState = function () { return { projects: [], todos: [], days: {}, notes: [] }; };
 
   /* ---- ngày ---- */
   GG.todayStr = function (d) { d = d || new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
@@ -100,7 +100,8 @@ const GG = {};
     var hit = false, projects = st.projects.map(function (p) { if (p.id !== id) return p; hit = true; return fn(p); });
     return hit ? withState(st, { projects: projects }) : st;
   }
-  function dropTodosOfWorks(st, workIds) { return st.todos.filter(function (t) { return workIds.indexOf(t.workId) < 0; }); }
+  function dropTodosOfWorks(st, workIds, projectId) { return st.todos.filter(function (t) { return workIds.indexOf(t.workId) < 0 && !(projectId && t.projectId === projectId); }); }
+  function hasProject(st, id) { return st.projects.some(function (p) { return p.id === id; }); }
   GG.addProject = function (st, name, today) {
     name = clean(name); if (!name) return st;
     return withState(st, { projects: st.projects.concat([{ id: GG.newId('p'), name: name, createdAt: today, works: [] }]) });
@@ -108,7 +109,7 @@ const GG = {};
   GG.renameProject = function (st, id, name) { name = clean(name); if (!name) return st; return mapProject(st, id, function (p) { return assign(p, { name: name }); }); };
   GG.deleteProject = function (st, id) {
     var p = st.projects.filter(function (x) { return x.id === id; })[0]; if (!p) return st;
-    return withState(st, { projects: st.projects.filter(function (x) { return x.id !== id; }), todos: dropTodosOfWorks(st, p.works.map(function (w) { return w.id; })) });
+    return withState(st, { projects: st.projects.filter(function (x) { return x.id !== id; }), todos: dropTodosOfWorks(st, p.works.map(function (w) { return w.id; }), id) });
   };
   GG.addWork = function (st, projectId, name) {
     name = clean(name); if (!name) return st;
@@ -128,13 +129,17 @@ const GG = {};
   };
   /* Việc lẻ: việc không thuộc project nào, workId là chuỗi rỗng. Ngoài chuyện đó nó giống mọi việc khác:
      có ngày, tick được, trễ thì mang sang hôm nay được, và cũng tính vào việc của ngày. */
+  /* Việc nằm thẳng trong project (không qua công việc nào): workId rỗng và có projectId. */
   GG.addTodo = function (st, t) {
-    var text = clean(t && t.text);
-    if (!t || !text || !GG.isDate(t.date) || (t.workId !== '' && !GG.findWork(st, t.workId))) return st;
-    return withState(st, { todos: st.todos.concat([{ id: GG.newId('t'), workId: t.workId, text: text, date: t.date, done: false, doneAt: null }]) });
+    var text = clean(t && t.text), todo;
+    if (!t || !text || !GG.isDate(t.date)) return st;
+    if (t.workId !== '' ? !GG.findWork(st, t.workId) : (t.projectId && !hasProject(st, t.projectId))) return st;
+    todo = { id: GG.newId('t'), workId: t.workId, text: text, date: t.date, done: false, doneAt: null };
+    if (t.workId === '' && t.projectId) todo.projectId = t.projectId;
+    return withState(st, { todos: st.todos.concat([todo]) });
   };
   function mapTodo(st, id, fn) {
-    var hit = false, todos = st.todos.map(function (t) { if (t.id !== id) return t; hit = true; return fn(t); });
+    var hit = false, todos = st.todos.map(function (t) { var r; if (t.id !== id) return t; r = fn(t); if (r !== t) hit = true; return r; });   // fn trả lại đúng việc cũ thì coi như không đổi
     return hit ? withState(st, { todos: todos }) : st;
   }
   GG.updateTodo = function (st, id, patch) {
@@ -144,7 +149,69 @@ const GG = {};
     if ('workId' in patch) { if (patch.workId !== '' && !GG.findWork(st, patch.workId)) return st; p.workId = patch.workId; }
     return mapTodo(st, id, function (t) { return assign(t, p); });
   };
-  GG.toggleTodo = function (st, id, nowIso) { return mapTodo(st, id, function (t) { return assign(t, { done: !t.done, doneAt: t.done ? null : nowIso }); }); };
+  /* Tick một việc là coi như xong cả các mục con của nó. Bỏ tick thì mục con giữ nguyên. */
+  GG.toggleTodo = function (st, id, nowIso) {
+    return mapTodo(st, id, function (t) {
+      var patch = { done: !t.done, doneAt: t.done ? null : nowIso };
+      if (!t.done && t.subs && t.subs.length) patch.subs = t.subs.map(function (s) { return s.done ? s : assign(s, { done: true }); });
+      return assign(t, patch);
+    });
+  };
+  /* ---- mục con của một việc: danh sách nhỏ để chia việc ra từng bước ---- */
+  function withSubs(t, subs, nowIso) {
+    var all = subs.length > 0 && subs.every(function (s) { return s.done; }), patch = { subs: subs };
+    if (!subs.length) { var o = assign(t, {}); delete o.subs; return o; }
+    if (all && !t.done) { patch.done = true; patch.doneAt = nowIso; }           // xong mục con cuối cùng: việc cũng xong
+    if (!all && t.done) { patch.done = false; patch.doneAt = null; }            // còn mục con chưa xong: việc chưa xong
+    return assign(t, patch);
+  }
+  GG.addSub = function (st, todoId, text, nowIso) {
+    text = clean(text); if (!text) return st;
+    return mapTodo(st, todoId, function (t) { return withSubs(t, (t.subs || []).concat([{ id: GG.newId('s'), text: text, done: false }]), nowIso); });
+  };
+  GG.toggleSub = function (st, todoId, subId, nowIso) {
+    return mapTodo(st, todoId, function (t) {
+      if (!(t.subs || []).some(function (s) { return s.id === subId; })) return t;
+      return withSubs(t, t.subs.map(function (s) { return s.id === subId ? assign(s, { done: !s.done }) : s; }), nowIso);
+    });
+  };
+  GG.renameSub = function (st, todoId, subId, text) {
+    text = clean(text); if (!text) return st;
+    return mapTodo(st, todoId, function (t) { return assign(t, { subs: (t.subs || []).map(function (s) { return s.id === subId ? assign(s, { text: text }) : s; }) }); });
+  };
+  GG.deleteSub = function (st, todoId, subId, nowIso) {
+    return mapTodo(st, todoId, function (t) {
+      var subs = (t.subs || []).filter(function (s) { return s.id !== subId; });
+      if (subs.length === (t.subs || []).length) return t;
+      return subs.length ? withSubs(t, subs, nowIso) : withSubs(assign(t, {}), [], nowIso);
+    });
+  };
+  /* Việc nằm thẳng trong một project. */
+  GG.directTodos = function (st, projectId) { return st.todos.filter(function (t) { return !t.workId && t.projectId === projectId; }); };
+
+  /* ---- ghi chú, ý tưởng ---- */
+  function notes(st) { return st.notes || []; }
+  GG.addNote = function (st, text, nowIso) {
+    text = clean(text); if (!text) return st;
+    return withState(st, { notes: notes(st).concat([{ id: GG.newId('n'), text: text, createdAt: nowIso, updatedAt: nowIso }]) });
+  };
+  function mapNote(st, id, fn) {
+    var hit = false, list = notes(st).map(function (n) { var r; if (n.id !== id) return n; r = fn(n); if (r !== n) hit = true; return r; });
+    return hit ? withState(st, { notes: list }) : st;
+  }
+  GG.updateNote = function (st, id, text, nowIso) {
+    text = clean(text); if (!text) return st;
+    return mapNote(st, id, function (n) { return n.text === text ? n : assign(n, { text: text, updatedAt: nowIso }); });
+  };
+  GG.pinNote = function (st, id) { return mapNote(st, id, function (n) { var o = assign(n, { pinned: !n.pinned }); if (!o.pinned) delete o.pinned; return o; }); };
+  GG.deleteNote = function (st, id) { var list = notes(st).filter(function (n) { return n.id !== id; }); return list.length === notes(st).length ? st : withState(st, { notes: list }); };
+  /* Ghim lên đầu, rồi tới ghi chú mới sửa gần đây nhất. */
+  GG.sortNotes = function (st) {
+    return notes(st).slice().sort(function (a, b) {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      return a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0;
+    });
+  };
   /* Ghi thêm một pomodoro đã xong cho một việc. */
   GG.addPomo = function (st, id) { return mapTodo(st, id, function (t) { return assign(t, { pomos: (t.pomos || 0) + 1 }); }); };
   GG.deleteTodo = function (st, id) { var todos = st.todos.filter(function (t) { return t.id !== id; }); return todos.length === st.todos.length ? st : withState(st, { todos: todos }); };
@@ -160,14 +227,14 @@ const GG = {};
   };
   GG.projectStats = function (st, projectId) {
     var p = st.projects.filter(function (x) { return x.id === projectId; })[0], ids = p ? p.works.map(function (w) { return w.id; }) : [];
-    var list = st.todos.filter(function (t) { return ids.indexOf(t.workId) >= 0; }), done = list.filter(function (t) { return t.done; }).length;
+    var list = st.todos.filter(function (t) { return ids.indexOf(t.workId) >= 0 || (!t.workId && t.projectId === projectId); }), done = list.filter(function (t) { return t.done; }).length;
     return { total: list.length, done: done, pct: list.length ? Math.floor(done * 100 / list.length) : 0 };
   };
 
   /* ---- xuất, nhập ---- */
   GG.exportData = function (st, nowIso) {
     var c = JSON.parse(JSON.stringify(st));
-    return { app: 'giri-garden', version: 1, exportedAt: nowIso, projects: c.projects, todos: c.todos, days: c.days };
+    return { app: 'giri-garden', version: 1, exportedAt: nowIso, projects: c.projects, todos: c.todos, days: c.days, notes: c.notes || [] };
   };
   GG.validateImport = function (o) {
     var fail = function (m) { return { ok: false, error: m }; };
@@ -179,12 +246,13 @@ const GG = {};
     if (!Array.isArray(o.projects)) return fail('File thiếu danh sách "projects".');
     if (!Array.isArray(o.todos)) return fail('File thiếu danh sách "todos".');
     if (!isObj(o.days)) return fail('File thiếu mục "days".');
-    var ids = {}, workIds = {}, projects = [], todos = [], days = {}, works = 0, trees = 0, i, j, p, w, t, d, key, list, out;
+    var ids = {}, workIds = {}, projectIds = {}, projects = [], todos = [], days = {}, noteList = [], works = 0, trees = 0, i, j, p, w, t, d, key, list, out, n, sb, subs;
+    if (o.notes != null && !Array.isArray(o.notes)) return fail('Mục "notes" phải là một danh sách.');
     for (i = 0; i < o.projects.length; i++) {
       p = o.projects[i];
       if (!isObj(p) || !str(p.id) || !str(p.name)) return fail('Project thứ ' + (i + 1) + ' thiếu id hoặc tên.');
       if (ids[p.id]) return fail('Trùng id "' + p.id + '" ở project thứ ' + (i + 1) + '.');
-      ids[p.id] = 1;
+      ids[p.id] = 1; projectIds[p.id] = 1;
       if (!GG.isDate(p.createdAt)) return fail('Project "' + p.name + '" có ngày tạo sai dạng (cần YYYY-MM-DD).');
       if (!Array.isArray(p.works)) return fail('Project "' + p.name + '" thiếu danh sách "works".');
       list = [];
@@ -209,6 +277,20 @@ const GG = {};
       if (t.pomos != null && !(typeof t.pomos === 'number' && t.pomos === Math.floor(t.pomos) && t.pomos >= 0)) return fail('Việc thứ ' + (i + 1) + ' có số pomodoro sai dạng.');
       out = { id: t.id, workId: t.workId, text: t.text.trim(), date: t.date, done: t.done, doneAt: t.doneAt == null ? null : t.doneAt };
       if (t.pomos) out.pomos = t.pomos;
+      if (t.projectId != null && t.workId === '') {
+        if (!projectIds[t.projectId]) return fail('Việc thứ ' + (i + 1) + ' trỏ tới project "' + t.projectId + '" không có trong file.');
+        out.projectId = t.projectId;
+      }
+      if (t.subs != null) {
+        if (!Array.isArray(t.subs)) return fail('Việc thứ ' + (i + 1) + ' có danh sách mục con sai dạng.');
+        subs = [];
+        for (j = 0; j < t.subs.length; j++) {
+          sb = t.subs[j];
+          if (!isObj(sb) || !str(sb.id) || !str(sb.text) || typeof sb.done !== 'boolean') return fail('Mục con thứ ' + (j + 1) + ' của việc thứ ' + (i + 1) + ' thiếu id, nội dung hoặc "done".');
+          subs.push({ id: sb.id, text: sb.text.trim(), done: sb.done });
+        }
+        if (subs.length) out.subs = subs;
+      }
       todos.push(out);
     }
     for (key in o.days) {
@@ -221,7 +303,17 @@ const GG = {};
       if (d.mood != null) { if (d.mood !== Math.floor(d.mood) || d.mood < 1 || d.mood > 5) return fail('Ngày ' + key + ' có mức cảm xúc ngoài khoảng 1 đến 5.'); out.mood = d.mood; }
       days[key] = out;
     }
-    return { ok: true, state: { projects: projects, todos: todos, days: days }, summary: { projects: projects.length, works: works, todos: todos.length, trees: trees } };
+    for (i = 0; i < (o.notes || []).length; i++) {
+      n = o.notes[i];
+      if (!isObj(n) || !str(n.id) || !str(n.text)) return fail('Ghi chú thứ ' + (i + 1) + ' thiếu id hoặc nội dung.');
+      if (ids[n.id]) return fail('Trùng id "' + n.id + '" ở ghi chú thứ ' + (i + 1) + '.');
+      ids[n.id] = 1;
+      if (!str(n.createdAt) || !str(n.updatedAt)) return fail('Ghi chú thứ ' + (i + 1) + ' thiếu thời điểm tạo hoặc sửa.');
+      out = { id: n.id, text: n.text.trim(), createdAt: n.createdAt, updatedAt: n.updatedAt };
+      if (n.pinned === true) out.pinned = true;
+      noteList.push(out);
+    }
+    return { ok: true, state: { projects: projects, todos: todos, days: days, notes: noteList }, summary: { projects: projects.length, works: works, todos: todos.length, trees: trees } };
   };
 
   /* ---- chia state theo tháng để lưu vào kho ---- */

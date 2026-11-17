@@ -12,12 +12,14 @@ import Projects from './screens/Projects';
 import { GardenPlot, GardenTrail } from './screens/Garden';
 import Mood from './screens/Mood';
 import Settings from './screens/Settings';
+import Notes from './screens/Notes';
 import Timers from './timers/Timers';
 import { greeting, periodAt } from './lib/daytime';
 
 const SCREENS: Record<string, { tab: string; wide?: boolean }> = {
   'hom-nay': { tab: 'hom-nay' },
   'project': { tab: 'project', wide: true },
+  'ghi-chu': { tab: 'ghi-chu' },
   'khu-vuon': { tab: 'khu-vuon' },
   'khu-vuon-lon': { tab: 'khu-vuon' },
   'cam-xuc': { tab: 'cam-xuc' },
@@ -26,6 +28,7 @@ const SCREENS: Record<string, { tab: string; wide?: boolean }> = {
 const TABS: { name: string; label: string; icon: IconName }[] = [
   { name: 'hom-nay', label: 'Hôm nay', icon: 'today' },
   { name: 'project', label: 'Project', icon: 'project' },
+  { name: 'ghi-chu', label: 'Ghi chú', icon: 'note' },
   { name: 'khu-vuon', label: 'Khu vườn', icon: 'garden' },
   { name: 'cam-xuc', label: 'Cảm xúc', icon: 'mood' },
   { name: 'cai-dat', label: 'Cài đặt', icon: 'gear' },
@@ -240,6 +243,7 @@ export default function Shell({ store, account }: { store: Store; account: Accou
   else if (route.name === 'khu-vuon-lon') screen = <GardenTrail />;
   else if (route.name === 'cam-xuc') screen = <Mood />;
   else if (route.name === 'cai-dat') screen = <Settings />;
+  else if (route.name === 'ghi-chu') screen = <Notes />;
   else screen = <Today />;
 
   return (

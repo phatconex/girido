@@ -1,9 +1,12 @@
 export interface Work { id: string; name: string; order: number }
 export interface Project { id: string; name: string; createdAt: string; works: Work[] }
-/** `workId` rỗng nghĩa là việc lẻ, không thuộc project nào. `pomos`: số pomodoro đã xong cho việc này. */
-export interface Todo { id: string; workId: string; text: string; date: string; done: boolean; doneAt: string | null; pomos?: number }
+export interface Sub { id: string; text: string; done: boolean }
+/** `workId` rỗng: việc không nằm trong công việc nào. Khi đó có `projectId` là việc nằm thẳng trong project, không có là việc lẻ.
+    `pomos`: số pomodoro đã xong. `subs`: các mục con. */
+export interface Todo { id: string; workId: string; projectId?: string; text: string; date: string; done: boolean; doneAt: string | null; pomos?: number; subs?: Sub[] }
+export interface Note { id: string; text: string; createdAt: string; updatedAt: string; pinned?: boolean }
 export interface Day { kind?: string; planted?: boolean; mood?: number }
-export interface State { projects: Project[]; todos: Todo[]; days: Record<string, Day> }
+export interface State { projects: Project[]; todos: Todo[]; days: Record<string, Day>; notes: Note[] }
 export interface Progress { total: number; done: number; pct: number }
 export type PlantReason = 'ok' | 'no-todos' | 'remaining' | 'planted' | 'past' | 'future';
 export interface ImportSummary { projects: number; works: number; todos: number; trees: number }
@@ -42,7 +45,17 @@ declare const GG: {
   addWork(st: State, projectId: string, name: string): State;
   renameWork(st: State, id: string, name: string): State;
   deleteWork(st: State, id: string): State;
-  addTodo(st: State, t: { workId: string; text: string; date: string }): State;
+  addTodo(st: State, t: { workId: string; projectId?: string; text: string; date: string }): State;
+  addSub(st: State, todoId: string, text: string, nowIso: string): State;
+  toggleSub(st: State, todoId: string, subId: string, nowIso: string): State;
+  renameSub(st: State, todoId: string, subId: string, text: string): State;
+  deleteSub(st: State, todoId: string, subId: string, nowIso: string): State;
+  directTodos(st: State, projectId: string): Todo[];
+  addNote(st: State, text: string, nowIso: string): State;
+  updateNote(st: State, id: string, text: string, nowIso: string): State;
+  pinNote(st: State, id: string): State;
+  deleteNote(st: State, id: string): State;
+  sortNotes(st: State): Note[];
   updateTodo(st: State, id: string, patch: { text?: string; date?: string; workId?: string }): State;
   toggleTodo(st: State, id: string, nowIso: string): State;
   deleteTodo(st: State, id: string): State;

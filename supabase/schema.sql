@@ -28,12 +28,14 @@ create table if not exists public.works (
 create table if not exists public.todos (
   user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
   id         text        not null,
-  work_id    text,                    -- null: việc lẻ, không thuộc project nào
+  work_id    text,                    -- null: việc không nằm trong công việc nào
+  project_id text,                    -- chỉ dùng khi work_id null: việc nằm thẳng trong project; cả hai null là việc lẻ
   text       text        not null check (length(trim(text)) > 0),
   date       date        not null,
   done       boolean     not null default false,
   done_at    timestamptz,
   pomos      integer     not null default 0 check (pomos >= 0),
+  subs       jsonb       not null default '[]'::jsonb,   -- các mục con: [{id, text, done}]
   pos        integer     not null default 0,
   created_at timestamptz not null default now(),
   primary key (user_id, id),
@@ -53,20 +55,42 @@ create table if not exists public.days (
 -- Project đã tạo bảng từ bản trước thì chỉnh ở đây.
 alter table public.todos add column if not exists pomos integer not null default 0 check (pomos >= 0);
 alter table public.todos alter column work_id drop not null;
+alter table public.todos add column if not exists project_id text;
+alter table public.todos add column if not exists subs jsonb not null default '[]'::jsonb;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'todos_project_fk') then
+    alter table public.todos add constraint todos_project_fk foreign key (user_id, project_id) references public.projects (user_id, id) on delete cascade;
+  end if;
+end $$;
+
+-- Ghi chú, ý tưởng.
+create table if not exists public.notes (
+  user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  id         text        not null,
+  body       text        not null check (length(trim(body)) > 0),
+  pinned     boolean     not null default false,
+  noted_at   timestamptz not null default now(),
+  edited_at  timestamptz not null default now(),
+  pos        integer     not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (user_id, id)
+);
 
 create index if not exists works_project_idx on public.works (user_id, project_id);
 create index if not exists todos_work_idx    on public.todos (user_id, work_id);
+create index if not exists todos_project_idx on public.todos (user_id, project_id);
 create index if not exists todos_date_idx    on public.todos (user_id, date);
 
 alter table public.projects enable row level security;
 alter table public.works    enable row level security;
 alter table public.todos    enable row level security;
 alter table public.days     enable row level security;
+alter table public.notes    enable row level security;
 
 do $$
 declare t text;
 begin
-  foreach t in array array['projects', 'works', 'todos', 'days'] loop
+  foreach t in array array['projects', 'works', 'todos', 'days', 'notes'] loop
     execute format('drop policy if exists "%s: chi chu so huu" on public.%I', t, t);
     execute format(
       'create policy "%s: chi chu so huu" on public.%I for all to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id)',

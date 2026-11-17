@@ -2,7 +2,7 @@
 // đường nối chuyển xanh khi việc đã xong.
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import GG from '../lib/logic';
-import type { Project, Work } from '../lib/logic';
+import type { Project, Todo, Work } from '../lib/logic';
 import { useApp } from '../app-context';
 import { useDialogs } from '../dialogs';
 import { Icon, Progress, fmtShort } from '../ui';
@@ -54,9 +54,10 @@ export default function Projects() {
       });
     });
   };
-  const addLeaf = (w: Work) => {
-    void dialogs.askTodo({ title: 'Thêm việc cho "' + w.name + '"', date: today, yes: 'Thêm việc' }).then((r) => {
-      if (r && !('danger' in r)) apply((s) => GG.addTodo(s, { workId: w.id, text: r.text, date: r.date }));
+  // work có giá trị: thêm vào công việc đó; không có: thêm thẳng vào project (việc chung)
+  const addLeaf = (w?: Work) => {
+    void dialogs.askTodo({ title: 'Thêm việc cho "' + (w ? w.name : p.name) + '"', date: today, yes: 'Thêm việc' }).then((r) => {
+      if (r && !('danger' in r)) apply((s) => GG.addTodo(s, w ? { workId: w.id, text: r.text, date: r.date } : { workId: '', projectId: p.id, text: r.text, date: r.date }));
     });
   };
   const addWork = () => {
@@ -66,9 +67,16 @@ export default function Projects() {
   /* ---- xếp chỗ cho từng nút của mindmap ---- */
   const nodes: ReactNode[] = [], links: { d: string; done: boolean }[] = [], centers: { y: number; done: boolean }[] = [];
   let y = 8;
-  works.forEach((w, wi) => {
-    const top = y, ws = GG.workStats(st, w.id), cys: { cy: number; done: boolean }[] = [];
-    const todos = st.todos.filter((t) => t.workId === w.id).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  // Nhánh đầu là "việc chung": việc nằm thẳng trong project. Nó hiện khi project chưa có công việc nào, hoặc đã có việc chung.
+  const direct = GG.directTodos(st, p.id), showDirect = direct.length > 0 || !works.length;
+  const branches: { id: string; work?: Work; list: Todo[] }[] = (showDirect ? [{ id: 'direct-' + p.id, list: direct }] : [] as { id: string; work?: Work; list: Todo[] }[])
+    .concat(works.map((w) => ({ id: w.id, work: w, list: st.todos.filter((t) => t.workId === w.id) })));
+  branches.forEach((b) => {
+    const w = { id: b.id }, wi = b.work ? works.indexOf(b.work) : -1;
+    const doneCount = b.list.filter((t) => t.done).length;
+    const ws = { total: b.list.length, done: doneCount, status: b.list.length && doneCount === b.list.length ? 'done' : doneCount > 0 ? 'now' : 'new' };
+    const top = y, cys: { cy: number; done: boolean }[] = [];
+    const todos = b.list.slice().sort((a, b2) => (a.date < b2.date ? -1 : a.date > b2.date ? 1 : 0));
     // việc đã xong nhiều thì gộp thành một lá, để nhánh không dài lê thê
     const doneList = todos.filter((t) => t.done), fold = doneList.length > 3 && !open[w.id];
     if (doneList.length > 3) {
@@ -86,26 +94,33 @@ export default function Projects() {
       nodes.push(
         <div className={'mk-node mk-leaf' + (t.done ? ' is-done' : '')} key={t.id} style={at(X[2], y)}>
           <button className="mk-leaf__dot" id={'leaf-' + t.id} type="button" aria-pressed={t.done} aria-label={(t.done ? 'Bỏ tick: ' : 'Xong: ') + t.text} onClick={(e) => tick(t, e.currentTarget)}>{t.done ? '✓' : ''}</button>
-          <button className="mk-leaf__text" id={'leaf-edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} onClick={() => editTodo(t)}>{t.text}</button>
+          <button className="mk-leaf__text" id={'leaf-edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} onClick={() => editTodo(t)}>{t.text}{t.subs?.length ? ' (' + t.subs.filter((s) => s.done).length + '/' + t.subs.length + ')' : ''}</button>
           <span className={'gg-chip' + (isNow ? ' gg-chip--sun' : late ? ' gg-chip--ember' : '')}>{isNow ? 'Hôm nay' : (late ? 'Trễ ' : '') + fmtShort(t.date)}</span>
         </div>,
       );
       cys.push({ cy: y + 20, done: t.done }); y += ROW;
     });
-    nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id={'add-leaf-' + w.id} key={'add-' + w.id} type="button" style={at(X[2], y)} onClick={() => addLeaf(w)}>+ Thêm việc</button>);
+    nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id={'add-leaf-' + w.id} key={'add-' + w.id} type="button" style={at(X[2], y)} onClick={() => addLeaf(b.work)}>+ Thêm việc</button>);
     y += ROW;
     const wy = (top + y - ROW) / 2 + 20, cls = ws.status === 'done' ? ' is-done' : ws.status === 'now' ? ' is-now' : '';
-    nodes.push(
-      <button className={'mk-node mk-work gg-work' + cls} id={'work-' + w.id} key={w.id} type="button" aria-label={'Sửa công việc ' + w.name} style={at(X[1], wy - 28)} onClick={() => editWork(w, ws.total)}>
+    const work = b.work;
+    nodes.push(work ? (
+      <button className={'mk-node mk-work gg-work' + cls} id={'work-' + w.id} key={w.id} type="button" aria-label={'Sửa công việc ' + work.name} style={at(X[1], wy - 28)} onClick={() => editWork(work, ws.total)}>
         <span className="gg-work__num">{pad2(wi + 1)}</span>
-        <span className="gg-work__name">{w.name}<span className="gg-work__meta">{ws.done} / {ws.total} việc</span></span>
-      </button>,
-    );
+        <span className="gg-work__name">{work.name}<span className="gg-work__meta">{ws.done} / {ws.total} việc</span></span>
+      </button>
+    ) : (
+      <div className={'mk-node mk-work mk-work--direct gg-work' + cls} id="work-direct" key={w.id} style={at(X[1], wy - 28)}>
+        <span className="gg-work__num">✓</span>
+        <span className="gg-work__name">Việc chung<span className="gg-work__meta">{ws.done} / {ws.total} việc · thẳng trong project</span></span>
+      </div>
+    ));
     cys.forEach((c) => links.push({ done: c.done, d: 'M' + (X[1] + 250) + ' ' + wy + ' C' + (X[1] + 290) + ' ' + wy + ' ' + (X[2] - 44) + ' ' + c.cy + ' ' + X[2] + ' ' + c.cy }));
     centers.push({ y: wy, done: ws.status === 'done' });
     y += 20;
   });
   nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id="add-work" key="add-work" type="button" style={at(X[1], y)} onClick={addWork}>+ Thêm công việc</button>);
+  if (!showDirect) nodes.push(<button className="mk-node mk-leaf mk-leaf--add" id="add-direct" key="add-direct" type="button" style={at(X[1] + 176, y)} onClick={() => addLeaf()}>+ Thêm việc chung</button>);
   const height = Math.max(y + 56, 200), ry = centers.length ? (centers[0].y + centers[centers.length - 1].y) / 2 : 90;
   centers.forEach((c) => links.push({ done: c.done, d: 'M190 ' + ry + ' C230 ' + ry + ' 222 ' + c.y + ' ' + X[1] + ' ' + c.y }));
 
@@ -127,7 +142,7 @@ export default function Projects() {
           ))}
           <button className="mk-ptab mk-ptab--new" id="proj-new" type="button" onClick={newProject}><Icon name="plus" />Project mới</button>
         </div>
-        <p className="gg-muted">Bấm vòng tròn để tick xong, bấm chữ để sửa. Đường nối chuyển xanh khi việc đã xong.</p>
+        <p className="gg-muted">Project nhỏ thì thêm việc thẳng vào "Việc chung"; project lớn thì chia thành các công việc. Bấm vòng tròn để tick xong, bấm chữ để sửa.</p>
       </section>
       <div className="mk-mindwrap">
         <div className="mk-mind" style={{ height }}>

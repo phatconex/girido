@@ -11,6 +11,7 @@ const base = (): State => ({
     { id: 'c', workId: 'w2', text: 'c', date: '2026-11-14', done: false, doneAt: null },
   ],
   days: { '2026-11-13': { kind: 'sen', planted: true, mood: 4 }, '2026-11-14': { mood: 2 } },
+  notes: [],
 });
 
 test('state đi qua các dòng rồi quay về vẫn như cũ', () => {

@@ -1,4 +1,4 @@
-// Kho Supabase: bốn bảng projects, works, todos, days (xem supabase/schema.sql). Mỗi dòng thuộc về một người dùng,
+// Kho Supabase: năm bảng projects, works, todos, days, notes (xem supabase/schema.sql). Mỗi dòng thuộc về một người dùng,
 // Row Level Security bảo đảm ai chỉ đọc và ghi được dòng của người đó.
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Repo } from './repo';
@@ -36,13 +36,14 @@ export function createSupabaseRepo(db: SupabaseClient, userId: string): Repo {
   return {
     kind: 'supabase',
     async load() {
-      const [projects, works, todos, days] = await Promise.all([
+      const [projects, works, todos, days, notes] = await Promise.all([
         all<Rows['projects'][number]>('projects', 'id,name,created_on,pos', ['created_at', 'pos', 'id']),
         all<Rows['works'][number]>('works', 'id,project_id,name,sort', ['sort', 'id']),
-        all<Rows['todos'][number]>('todos', 'id,work_id,text,date,done,done_at,pomos,pos', ['created_at', 'pos', 'id']),
+        all<Rows['todos'][number]>('todos', 'id,work_id,project_id,text,date,done,done_at,pomos,subs,pos', ['created_at', 'pos', 'id']),
         all<Rows['days'][number]>('days', 'date,kind,planted,mood', ['date']),
+        all<Rows['notes'][number]>('notes', 'id,body,pinned,noted_at,edited_at,pos', ['created_at', 'pos', 'id']),
       ]);
-      return fromRows({ projects, works, todos, days });
+      return fromRows({ projects, works, todos, days, notes });
     },
     async save(prev, next) {
       const c = diff(prev, next);
@@ -51,10 +52,12 @@ export function createSupabaseRepo(db: SupabaseClient, userId: string): Repo {
       await write('works', c.works, 'id');
       await write('todos', c.todos, 'id');
       await write('days', c.days, 'date');
+      await write('notes', c.notes, 'id');
       await remove('todos', c.todos.remove, 'id');
       await remove('works', c.works.remove, 'id');
       await remove('projects', c.projects.remove, 'id');
       await remove('days', c.days.remove, 'date');
+      await remove('notes', c.notes.remove, 'id');
     },
   };
 }

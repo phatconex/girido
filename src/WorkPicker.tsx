@@ -10,9 +10,14 @@ export function fold(s: string): string {
 
 export interface Option { id: string; name: string; project: string }
 
-export default function WorkPicker({ projects, value, onChange, id, first }: { projects: Project[]; value: string; onChange: (workId: string) => void; id: string; first?: Option }) {
+/** Id của lựa chọn "việc nằm thẳng trong project" (không qua công việc nào). */
+export const directId = (projectId: string) => '@p:' + projectId;
+
+/** `direct`: mỗi project có thêm lựa chọn "Việc chung" đứng đầu, để thêm việc thẳng vào project. */
+export default function WorkPicker({ projects, value, onChange, id, first, direct }: { projects: Project[]; value: string; onChange: (workId: string) => void; id: string; first?: Option; direct?: boolean }) {
   const all = useMemo<Option[]>(() => (first ? [first] : []).concat(projects.flatMap((p) =>
-    p.works.slice().sort((a, b) => a.order - b.order).map((w) => ({ id: w.id, name: w.name, project: p.name })))), [projects, first]);
+    (direct ? [{ id: directId(p.id), name: 'Việc chung', project: p.name }] : []).concat(
+      p.works.slice().sort((a, b) => a.order - b.order).map((w) => ({ id: w.id, name: w.name, project: p.name }))))), [projects, first, direct]);
   return <Picker id={id} options={all} value={value} onChange={onChange} label="Thuộc công việc" what="công việc" placeholder="Tìm công việc hoặc project" />;
 }
 

@@ -308,3 +308,34 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 /* lời chào của Giri nằm trên, tình hình việc hôm nay nằm dưới và nhỏ hơn */
 .mk-hello { display: block; margin-bottom: 6px; }
 .mk-hello + span { display: block; padding-top: 6px; border-top: 2px dashed var(--sand-300); font-size: 14px; line-height: 20px; opacity: 0.85; }
+
+/* ---- mục con của một việc ---- */
+.mk-todo { display: grid; }
+.mk-subadd { color: var(--ink-soft); }
+.mk-subadd .mk-icon { width: 18px; height: 18px; fill: none; stroke-width: 2.5; margin: 0; }
+.mk-subs { display: grid; gap: 2px; margin: 0 0 var(--space-2) 26px; padding-left: var(--space-4); border-left: 2px dashed var(--line); }
+.mk-sub { display: flex; align-items: center; gap: var(--space-2); min-height: 38px; padding: 2px var(--space-2); border-radius: var(--radius-sm); }
+.mk-sub:hover { background: var(--surface-soft); }
+.mk-sub .gg-check { width: 24px; height: 24px; border-radius: 8px; }
+.mk-sub .gg-check::after { width: 10px; height: 5px; border-width: 3px; }
+.mk-sub__btn { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); font: 600 15px/20px var(--font-body); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.mk-sub:has(.gg-check:checked) .mk-sub__btn { color: var(--ink-soft); text-decoration: line-through; }
+.mk-sub--new .gg-input { flex: 1; height: 40px; padding: 0 var(--space-3); font-size: 15px; }
+
+/* nhánh "việc chung" trong mindmap: việc nằm thẳng trong project, không bấm sửa được như công việc */
+.mk-work--direct { cursor: default; border-style: dashed; }
+.mk-work--direct .gg-work__num { font-size: 20px; }
+
+/* ---- tab Ghi chú ---- */
+textarea.gg-input.mk-note__area { height: auto; min-height: 96px; padding: var(--space-3) var(--space-4); resize: vertical; line-height: 24px; }
+.mk-note__search { flex: 0 1 240px; height: 40px; font-size: 15px; }
+.mk-notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-3); align-items: start; }
+.mk-note { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-3) var(--space-2) var(--space-4); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--surface-soft); }
+.mk-note.is-pinned { border-color: var(--sun-400); background: var(--sun-100); }
+.mk-note__text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden; padding: 0; border: 0; background: none; color: var(--ink); font: 600 15px/22px var(--font-body); text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; cursor: pointer; }
+.mk-note__text:focus-visible { outline: 3px solid var(--water-600); outline-offset: 3px; border-radius: 4px; }
+.mk-note__foot { display: flex; align-items: center; gap: 2px; }
+.mk-note__when { flex: 1; min-width: 0; font: 700 12px/16px var(--font-body); color: var(--ink-soft); }
+.mk-note__foot .mk-tool { width: 36px; height: 36px; padding: 0; justify-content: center; }
+.mk-note__foot .mk-tool[aria-pressed="true"] { color: var(--sun-text); }
+@media (max-width: 720px) { .mk-tab { padding-inline: var(--space-2); font-size: 13px; } }

@@ -9,6 +9,7 @@ const seed = (): State => ({
   projects: [{ id: 'p1', name: 'P', createdAt: '2026-11-01', works: [{ id: 'w1', name: 'W', order: 1 }] }],
   todos: [{ id: 'a', workId: 'w1', text: 'a', date: '2026-11-13', done: false, doneAt: null }],
   days: {},
+  notes: [],
 });
 function fakeRepo(initial: State = seed()) {
   const repo = {
