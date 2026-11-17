@@ -14,6 +14,11 @@ const SCENE_OPTIONS: Option[] = [
   { id: 'dusk', name: 'Luôn buổi chiều', project: '' },
   { id: 'night', name: 'Luôn buổi tối', project: '' },
 ];
+const MOTION_OPTIONS: Option[] = [
+  { id: 'full', name: 'Đầy đủ', project: '' },
+  { id: 'lite', name: 'Nhẹ, đỡ tốn máy', project: '' },
+  { id: 'off', name: 'Tắt, cảnh đứng yên', project: '' },
+];
 const SOUND_OPTIONS: Option[] = [
   ...FILES.map((f) => ({ id: f.id, name: f.name, project: 'File âm thanh' })),
   ...STYLES.map((s) => ({ id: s.id, name: s.name, project: 'Tiếng tổng hợp' })),
@@ -121,6 +126,10 @@ export default function Settings() {
         <div className="mk-set">
           <p className="mk-set__text"><b>Khung cảnh nền</b>Sáng từ 5 giờ, chiều vàng từ 15 giờ, tối có trăng sao từ 18 giờ 30</p>
           <Picker id="pref-scene" cls="mk-pick--sound" options={SCENE_OPTIONS} value={p.scene} label="Phong cảnh" what="phong cảnh" onChange={(id) => prefs.set({ scene: id as Prefs['scene'] })} />
+        </div>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Chuyển động</b>Máy nóng hoặc quạt kêu thì chọn Nhẹ hoặc Tắt. Cảnh cũng tự đứng yên khi bạn không dùng app.</p>
+          <Picker id="pref-motion" cls="mk-pick--sound" options={MOTION_OPTIONS} value={p.motion} label="Chuyển động" what="mức chuyển động" onChange={(id) => prefs.set({ motion: id as Prefs['motion'] })} />
         </div>
       </section>
 

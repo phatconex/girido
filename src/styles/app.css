@@ -15,6 +15,8 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
   --mk-sun-y: 520px; --mk-sun-o: 0; --mk-cloud-c: #56689b; --mk-cloud-o: 0.55;
   --mk-bank-c: #2c5559; --mk-near-c: #356258; --mk-meadow-c: #2e5a5a; --mk-pine-c: #1c3848; --mk-blade-c: #1f4a44; --mk-blade-front-c: #173d3a; --mk-lily-c: #2f6b5c;
   --mk-glint-o: 0.4; --mk-night-o: 1; --mk-plant-filter: brightness(0.55) saturate(0.75) hue-rotate(15deg); --mk-bird-o: 0; }
+/* ban đêm cây đứng yên: cây đang bị phủ bộ lọc tối màu, vừa lọc vừa lắc thì mỗi khung hình phải lọc lại */
+[data-sky="night"] .mk-scene .gg-p-grow { animation: none; }
 [data-sky="night"] body { background: #34467a; }
 [data-sky="dusk"] body { background: #ffdcae; }
 
@@ -22,6 +24,16 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 .mk-scene { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: linear-gradient(var(--mk-sky-1), var(--mk-sky-2) 62%); }
 .mk-scene svg :is(path, circle, ellipse, g) { transition: fill 1.6s ease, stroke 1.6s ease, opacity 1.6s ease, transform 2.4s ease; }
 .mk-scene > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* lớp có chuyển động được tách thành lớp vẽ riêng, để nó vẽ lại mà không kéo theo lớp tĩnh phía sau */
+.mk-layer--moving { will-change: transform; pointer-events: none; }
+/* Ngừng mọi hoạt ảnh của cảnh và của Giri khi không ai nhìn: cửa sổ mất tiêu điểm, tab bị che, hoặc lâu không chạm vào (xem Scene trong App.tsx). */
+[data-still] .mk-scene *, [data-still] .gg-giri *, [data-still] .mk-hero .gg-plant * { animation-play-state: paused !important; }
+/* mức hiệu ứng "Nhẹ": chỉ còn mây trôi, sao và ánh lấp lánh; "Tắt": cảnh đứng yên hẳn */
+[data-motion="lite"] .mk-scene :is(.gg-p-grow, .mk-water-2, .mk-blade, .mk-leaf-fall, .mk-lily, .mk-wave, .mk-flock, .mk-flap, .mk-halo, .mk-moonglow) { animation: none; }
+[data-motion="lite"] .mk-leaf-fall, [data-motion="off"] .mk-leaf-fall { display: none; }
+[data-motion="off"] .mk-scene * { animation: none !important; }
+[data-motion="off"] .mk-spark { display: none; }
+[data-motion="off"] .mk-layer--moving { will-change: auto; }
 .mk-sunwrap { transform: translateY(var(--mk-sun-y)); opacity: var(--mk-sun-o); }
 .mk-sun { fill: var(--mk-sun-c); }
 .mk-halo { fill: var(--mk-sun-c); opacity: 0.35; transform-box: fill-box; transform-origin: center; animation: mk-pulse 6s ease-in-out infinite; }
@@ -30,7 +42,7 @@ body { margin: 0; background: var(--bg); overflow-x: hidden; }
 .mk-star { fill: #fff8dc; transform-box: fill-box; transform-origin: center; animation: mk-twinkle 3.8s ease-in-out infinite; }
 .mk-moon { fill: #fff3c4; }
 .mk-moonglow { fill: #fff3c4; opacity: 0.14; transform-box: fill-box; transform-origin: center; animation: mk-pulse 7s ease-in-out infinite; }
-.mk-firefly { fill: #f7f48a; filter: drop-shadow(0 0 5px #f7f48a); transform-box: fill-box; animation: mk-firefly 9s ease-in-out infinite; }
+.mk-firefly { fill: #f7f48a; stroke: #f7f48a; stroke-width: 9; stroke-opacity: 0.22; transform-box: fill-box; animation: mk-firefly 9s ease-in-out infinite; }
 @keyframes mk-firefly { 0%, 100% { transform: translate(0, 0); opacity: 0.15; } 25% { transform: translate(26px, -22px); opacity: 1; } 50% { transform: translate(-8px, -44px); opacity: 0.35; } 75% { transform: translate(-30px, -16px); opacity: 1; } }
 .mk-drift { animation: mk-drift 120s linear infinite; }
 .mk-drift--slow { animation-duration: 190s; }

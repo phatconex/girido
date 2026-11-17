@@ -14,9 +14,36 @@ import Auth, { NewPassword } from './screens/Auth';
 import type { Account } from './app-context';
 
 const SCENE = scene();
+const IDLE_MS = 45000;
 /** Cảnh nền. Sáng, chiều hay tối là do thuộc tính data-sky trên thẻ html quyết định (màu nằm trong app.css). */
 function Scene() {
-  const { scene: wanted } = usePrefs();
+  const { scene: wanted, motion } = usePrefs();
+  useEffect(() => { document.documentElement.dataset.motion = motion; }, [motion]);
+  // Không ai nhìn thì cho cảnh đứng yên, đỡ tốn máy: tab bị che, cửa sổ mất tiêu điểm, hoặc 45 giây không chạm vào gì.
+  useEffect(() => {
+    let last = Date.now();
+    const root = document.documentElement;
+    const check = () => {
+      const still = document.hidden || !document.hasFocus() || Date.now() - last > IDLE_MS;
+      if (still) root.dataset.still = '1'; else delete root.dataset.still;
+    };
+    const active = () => { last = Date.now(); if (root.dataset.still) check(); };
+    const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+    events.forEach((e) => window.addEventListener(e, active, { passive: true }));
+    window.addEventListener('focus', active);
+    window.addEventListener('blur', check);
+    document.addEventListener('visibilitychange', check);
+    const id = setInterval(check, 5000);
+    check();
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, active));
+      window.removeEventListener('focus', active);
+      window.removeEventListener('blur', check);
+      document.removeEventListener('visibilitychange', check);
+      clearInterval(id);
+      delete root.dataset.still;
+    };
+  }, []);
   const [auto, setAuto] = useState(() => skyAt(new Date()));
   useEffect(() => {
     const sync = () => setAuto(skyAt(new Date()));
