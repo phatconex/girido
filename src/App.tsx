@@ -4,13 +4,13 @@ import type { Session } from '@supabase/supabase-js';
 import { scene } from './lib/world';
 import { skyAt } from './lib/daytime';
 import { usePrefs } from './timers/prefs';
-import { supabase } from './data/supabase';
+import { supabase, openedFromRecoveryLink } from './data/supabase';
 import { createStore } from './data/store';
 import { createLocalRepo } from './data/localRepo';
 import { createSupabaseRepo } from './data/supabaseRepo';
 import { DialogProvider } from './dialogs';
 import Shell from './Shell';
-import Auth from './screens/Auth';
+import Auth, { NewPassword } from './screens/Auth';
 import type { Account } from './app-context';
 
 const SCENE = scene();
@@ -37,9 +37,11 @@ function LocalApp() {
 function CloudApp() {
   const db = supabase!;
   const [session, setSession] = useState<Session | null | undefined>(undefined);   // undefined: đang hỏi Supabase
+  const [recovering, setRecovering] = useState(openedFromRecoveryLink);
   useEffect(() => {
     void db.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = db.auth.onAuthStateChange((_event, s) => setSession(s));
+    // PASSWORD_RECOVERY: người dùng vừa mở link đặt lại mật khẩu trong thư
+    const { data } = db.auth.onAuthStateChange((event, s) => { if (event === 'PASSWORD_RECOVERY') setRecovering(true); setSession(s); });
     return () => data.subscription.unsubscribe();
   }, [db]);
   const userId = session?.user.id, email = session?.user.email || '';
@@ -48,6 +50,7 @@ function CloudApp() {
 
   if (session === undefined) return <main className="gd-auth gg"><p className="gg-bubble">Giri đang mở cổng rừng…</p></main>;
   if (!store) return <Auth db={db} />;
+  if (recovering) return <NewPassword db={db} email={email} onDone={() => setRecovering(false)} />;
   return <DialogProvider><Shell key={userId} store={store} account={account} /></DialogProvider>;
 }
 

@@ -338,7 +338,6 @@ textarea.gg-input.mk-note__area { height: auto; min-height: 96px; padding: var(-
 .mk-note__when { flex: 1; min-width: 0; font: 700 12px/16px var(--font-body); color: var(--ink-soft); }
 .mk-note__foot .mk-tool { width: 36px; height: 36px; padding: 0; justify-content: center; }
 .mk-note__foot .mk-tool[aria-pressed="true"] { color: var(--sun-text); }
-@media (max-width: 720px) { .mk-tab { padding-inline: var(--space-2); font-size: 13px; } }
 
 /* ---- khu đất: chọn ô để trồng, sắp xếp lại cây ---- */
 .mk-plotbar { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--sun-100); }
@@ -356,3 +355,102 @@ textarea.gg-input.mk-note__area { height: auto; min-height: 96px; padding: var(-
 .mk-jar .gg-jar.is-shakable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; }
 .mk-jar .gg-jar.is-held { cursor: grabbing; }
 .mk-jar__hint { text-align: center; }
+
+.gd-auth__link { align-self: center; padding: var(--space-1) var(--space-2); font: 800 14px/20px var(--font-body); }
+
+/* ---- Giri: bấm vào được, đội nón lá buổi trưa ---- */
+.mk-giri { display: block; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+.mk-giri:focus-visible { outline: 3px solid var(--water-600); outline-offset: 6px; border-radius: 24px; }
+.mk-giri:active .gg-giri { transform: scale(0.97); }
+.gg-giri__hat { position: absolute; left: -0.55em; bottom: calc(100% - 0.55em); width: 5.4em; height: 1.9em; background: linear-gradient(100deg, #f6e2a4 0 48%, #e3c47a 52% 100%); clip-path: polygon(50% 0, 100% 100%, 0 100%); z-index: 2; }
+.gg-giri__hatstrap { position: absolute; left: 1.35em; top: 100%; width: 2.6em; height: 1.5em; border: 0.13em solid var(--clay-600); border-top: 0; border-radius: 0 0 1.3em 1.3em; opacity: 0.7; }
+
+/* ---- màn chào người mới ---- */
+.mk-welcome { z-index: 45; }
+.mk-welcome__box { display: grid; gap: var(--space-3); max-width: 460px; text-align: center; }
+.mk-welcome__count { margin: 0; text-align: left; font: 800 12px/16px var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-soft); }
+.mk-welcome__art { display: grid; place-items: center; min-height: 190px; padding: var(--space-2) 0; animation: mk-pick-in var(--dur-base) var(--ease-out); }
+.mk-welcome__art svg { max-width: 100%; height: auto; }
+.mk-welcome__row { display: flex; align-items: flex-end; justify-content: center; gap: var(--space-4); }
+.mk-welcome__title { margin: 0; }
+.mk-welcome__body { margin: 0; font: 600 16px/24px var(--font-body); color: var(--ink-soft); }
+.mk-welcome__dots { display: flex; justify-content: center; gap: 8px; padding: var(--space-1) 0; }
+.mk-welcome__dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: width var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.mk-welcome__dots span.is-on { width: 22px; border-radius: var(--radius-pill); background: var(--leaf-500); }
+.mk-welcome .ga-dialog__actions { justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .mk-welcome__art { animation: none; } }
+
+/* nhóm nút bên phải của một việc */
+.mk-item__acts { flex: none; display: flex; align-items: center; gap: var(--space-2); }
+button.mk-pomo__time { padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: default; }
+
+/* ================= điện thoại ================= */
+@media (max-width: 1080px) {
+  /* thẻ cây và Giri gọn lại, để bảng việc lên gần đầu trang */
+  .mk-hud { padding: var(--space-3) var(--space-4); gap: var(--space-2); }
+  .mk-hero { flex-direction: row; align-items: center; justify-content: center; gap: var(--space-2); width: 100%; max-width: 560px; }
+  .mk-hero .gg-bubble { order: 2; flex: 1; max-width: none; margin: 0; }
+  .mk-hero .mk-bubble-down::before { left: -9px; top: calc(50% - 8px); bottom: auto; transform: rotate(45deg); }
+  .mk-hero__stage { order: 1; flex: none; }
+  .mk-hero #day-plant { display: none !important; }                        /* cây hôm nay đã có trong thẻ phía trên */
+  .mk-hero .gg-giri { font-size: 6.2px !important; }
+}
+@media (max-width: 640px) {
+  .mk-app { padding-top: var(--space-3); padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .mk-hud__chips { display: none; }
+  .mk-hud__top svg { width: 44px; height: auto; }
+  .mk-hud .gg-progress--lg { height: 18px; }
+  .mk-hero .gg-bubble { padding: var(--space-3); font-size: 14px; line-height: 19px; }
+  .mk-hello + span { font-size: 13px; line-height: 18px; }
+
+  /* thanh điều hướng nằm cố định ở đáy màn hình, như một app */
+  .mk-tabs { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px)); background: var(--sand-100); border-top: 2px solid var(--sand-300); box-shadow: 0 -6px 18px rgba(29, 58, 87, 0.12); }
+  .mk-tab { flex-direction: column; justify-content: center; gap: 2px; min-height: 54px; padding: 4px 2px; border-radius: 14px; background: none; box-shadow: none; color: var(--sand-text); font: 800 11px/13px var(--font-body); white-space: nowrap; }
+  .mk-tab .mk-icon { display: block; width: 22px; height: 22px; }
+  .mk-tab[aria-current="page"] { background: var(--water-100); color: var(--water-text); box-shadow: none; }
+  .mk-frame { padding: var(--space-2); border-radius: 22px; }
+
+  /* một việc: chữ chiếm trọn dòng đầu, các nút xuống dòng dưới */
+  .mk-item { flex-wrap: wrap; row-gap: 4px; padding: 8px var(--space-1); }
+  .mk-item__btn { flex: 1 1 calc(100% - 56px); }
+  .mk-item__acts { flex: 1 1 100%; justify-content: flex-end; }
+  .mk-subs { margin-left: 14px; padding-left: var(--space-3); }
+  .mk-add .gg-input { flex-basis: 100%; }
+  .mk-add .mk-pick { flex: 1 1 0; }
+  .mk-head { gap: var(--space-2); }
+  .mk-h1 { font-size: 26px; line-height: 32px; }
+  .mk-week { width: 100%; }
+  .mk-sec--late .mk-mini { white-space: nowrap; }
+
+  /* project: mindmap thành danh sách dọc */
+  .mk-mindwrap { overflow: visible; padding: var(--space-4); }
+  .mk-mind { min-width: 0; height: auto !important; display: grid; gap: var(--space-2); }
+  .mk-mind > svg { display: none; }
+  .mk-node { position: static; }
+  .mk-root { width: auto; margin-bottom: var(--space-2); }
+  .mk-work { width: 100%; margin-top: var(--space-3); }
+  .mk-leaf { width: auto; margin-left: var(--space-4); }
+  .mk-leaf__text { white-space: normal; overflow-wrap: anywhere; }
+  .mk-leaf--add { justify-self: start; }
+  .mk-tools .mk-tool { padding: 0 var(--space-2); }
+
+  /* góc đồng hồ và thông báo nằm trên thanh điều hướng */
+  .mk-dock { left: 10px; right: 10px; width: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .mk-pomo { gap: 2px; padding: var(--space-2) var(--space-3) var(--space-3); border-radius: var(--radius-md); }
+  .mk-pomo__time { font-size: 30px; line-height: 34px; cursor: pointer; }
+  button.mk-pomo__time { cursor: pointer; text-decoration: underline dotted var(--line-strong); text-underline-offset: 5px; }
+  .mk-pomo__len { display: none; }
+  .mk-pomo.is-more .mk-pomo__len { display: flex; }
+  .mk-remind { padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); }
+  .ga-toasts { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .ga-status { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 24px); }
+
+  .mk-set { gap: var(--space-2); }
+  .mk-pick--sound { flex: 1 1 150px; }
+  .mk-vol input { width: 120px; }
+  .mk-notes { grid-template-columns: 1fr; }
+  .mk-plotbar { flex-direction: column; align-items: stretch; }
+  .ga-dialog { padding: var(--space-3); align-items: end; }
+  .ga-dialog__box { max-height: calc(100dvh - 24px); }
+  .mk-welcome__art { min-height: 150px; }
+}

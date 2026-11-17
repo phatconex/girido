@@ -2,7 +2,7 @@ export type GiriMood = 'happy' | 'cheer' | 'sleepy' | 'sad' | 'munch';
 export interface LiveJar { add(level: number): void; setLast(level: number): void; count(): number }
 
 declare const Giri: {
-  mascot(mood: GiriMood, size?: number): string;
+  mascot(mood: GiriMood, size?: number, opts?: { hat?: boolean }): string;
   plant(stage: number, kind: string, size?: number, bare?: boolean): string;
   plot(cells: ({ day: number; kind: string } | null)[], opts?: { fresh?: number; pick?: boolean; selected?: number; size?: number }): string;
   trail(months: { key?: string; name: string; days: (string | null)[] }[], opts?: { per?: number; size?: number }): string;

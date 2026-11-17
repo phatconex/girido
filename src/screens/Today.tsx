@@ -63,13 +63,15 @@ function Row({ t, sub, extra, canFocus }: { t: Todo; sub?: string; extra?: React
       <button className="mk-item__btn" id={'edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} onClick={() => editTodo(t)}>
         {t.text}{sub && <small>{sub}</small>}
       </button>
-      {subs.length > 0 && <span className={'gg-chip' + (subsDone === subs.length ? ' gg-chip--leaf' : '')} title="Mục con đã xong">{subsDone}/{subs.length}</span>}
-      <button className="mk-focus mk-subadd" id={'sub-add-' + t.id} type="button" aria-expanded={adding} aria-label={'Thêm mục con cho: ' + t.text} title="Thêm mục con" onClick={() => setAdding((v) => !v)}><Icon name="sub" /></button>
-      {!!t.pomos && <span className="mk-pomos" title={t.pomos + ' pomodoro đã xong'}><i aria-hidden="true" />{t.pomos}<span className="mk-sr"> pomodoro đã xong</span></span>}
-      {canFocus && !t.done && (active
-        ? <span className="gg-chip gg-chip--sun">{pomo?.phase === 'break' ? 'Đang nghỉ' : 'Đang làm'}</span>
-        : <button className="mk-focus" id={'focus-' + t.id} type="button" aria-label={'Bắt đầu pomodoro cho: ' + t.text} title="Bắt đầu pomodoro" onClick={focus}><Icon name="play" /></button>)}
-      {extra}
+      <div className="mk-item__acts">
+        {subs.length > 0 && <span className={'gg-chip' + (subsDone === subs.length ? ' gg-chip--leaf' : '')} title="Mục con đã xong">{subsDone}/{subs.length}</span>}
+        <button className="mk-focus mk-subadd" id={'sub-add-' + t.id} type="button" aria-expanded={adding} aria-label={'Thêm mục con cho: ' + t.text} title="Thêm mục con" onClick={() => setAdding((v) => !v)}><Icon name="sub" /></button>
+        {!!t.pomos && <span className="mk-pomos" title={t.pomos + ' pomodoro đã xong'}><i aria-hidden="true" />{t.pomos}<span className="mk-sr"> pomodoro đã xong</span></span>}
+        {canFocus && !t.done && (active
+          ? <span className="gg-chip gg-chip--sun">{pomo?.phase === 'break' ? 'Đang nghỉ' : 'Đang làm'}</span>
+          : <button className="mk-focus" id={'focus-' + t.id} type="button" aria-label={'Bắt đầu pomodoro cho: ' + t.text} title="Bắt đầu pomodoro" onClick={focus}><Icon name="play" /></button>)}
+        {extra}
+      </div>
     </div>
     {(subs.length > 0 || adding) && (
       <div className="mk-subs">

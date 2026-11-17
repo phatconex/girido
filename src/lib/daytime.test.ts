@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { skyAt, periodAt, greeting, type Period } from './daytime';
+import { skyAt, periodAt, greeting, daysBetween, missedLine, pokeLine, type Period } from './daytime';
 
 const at = (h: number, m = 0) => new Date(2026, 10, 16, h, m);
 
@@ -29,4 +29,19 @@ test('mọi lời chào đều ngắn vừa bong bóng của Giri', () => {
     expect(line.length).toBeGreaterThan(10);
     expect(line.length).toBeLessThanOrEqual(90);
   }
+});
+
+test('lâu ngày mới gặp: vắng dưới 3 ngày thì thôi, từ 3 ngày thì Giri nhắc, càng lâu càng nhớ', () => {
+  expect(daysBetween('2026-10-30', '2026-11-02')).toBe(3);
+  expect(missedLine(null, '2026-11-17')).toBe('');
+  expect(missedLine('hỏng', '2026-11-17')).toBe('');
+  expect(missedLine('2026-11-15', '2026-11-17')).toBe('');
+  expect(missedLine('2026-11-14', '2026-11-17')).toContain('3 ngày');
+  expect(missedLine('2026-11-09', '2026-11-17')).toContain('Cả tuần');
+  expect(missedLine('2026-10-01', '2026-11-17')).toContain('47 ngày');
+});
+
+test('chọc Giri thì mỗi lần một câu, hết câu thì quay vòng', () => {
+  expect(pokeLine(0)).not.toBe(pokeLine(1));
+  expect(pokeLine(6)).toBe(pokeLine(0));
 });

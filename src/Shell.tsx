@@ -13,8 +13,22 @@ import { GardenPlot, GardenTrail } from './screens/Garden';
 import Mood from './screens/Mood';
 import Settings from './screens/Settings';
 import Notes from './screens/Notes';
+import Welcome, { welcomed, markWelcomed, WELCOME_EVENT } from './Welcome';
 import Timers from './timers/Timers';
-import { greeting, periodAt } from './lib/daytime';
+import { greeting, periodAt, focusLine, pomoDoneLine, pokeLine, missedLine } from './lib/daytime';
+import { usePomodoro } from './timers/pomodoro';
+
+/** Timers báo "vừa xong một pomodoro" qua sự kiện này để Giri ăn mừng. */
+export const POMO_DONE_EVENT = 'girido:pomo-done';
+
+// lần gần nhất mở app trên máy này: để Giri biết đã lâu chưa gặp. Đọc một lần lúc mở, rồi ghi lại hôm nay.
+const VISIT_KEY = 'girido-last-visit';
+let lastVisit: string | null | undefined;      // undefined: chưa đọc. Đọc đúng một lần cho mỗi lần tải trang.
+function readLastVisit(today: string): string | null {
+  if (lastVisit !== undefined) return lastVisit;
+  try { lastVisit = localStorage.getItem(VISIT_KEY); localStorage.setItem(VISIT_KEY, today); } catch { lastVisit = null; }
+  return lastVisit;
+}
 
 const SCREENS: Record<string, { tab: string; wide?: boolean }> = {
   'hom-nay': { tab: 'hom-nay' },
@@ -115,6 +129,21 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', sync); };
   }, []);
   const firstRun = !state.projects.length && !state.todos.length;
+  const pomo = usePomodoro();
+  // phản ứng tạm thời: lâu ngày mới gặp, vừa xong pomodoro, bị bấm vào. Hiện vài giây rồi về lời chào bình thường.
+  const [react, setReact] = useState<{ mood: GiriMood; line: string } | null>(() => { const l = missedLine(readLastVisit(today), today); return l ? { mood: 'sad', line: l } : null; });
+  const reactTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined), pokes = useRef(0);
+  const show = useCallback((r: { mood: GiriMood; line: string }, ms: number) => {
+    clearTimeout(reactTimer.current); setReact(r);
+    reactTimer.current = setTimeout(() => setReact(null), ms);
+  }, []);
+  useEffect(() => {
+    if (react) reactTimer.current = setTimeout(() => setReact(null), 9000);          // câu "lâu rồi mới gặp" lúc mở app
+    const onPomo = () => show({ mood: 'cheer', line: pomoDoneLine(String(Date.now())) }, 7000);
+    window.addEventListener(POMO_DONE_EVENT, onPomo);
+    return () => { window.removeEventListener(POMO_DONE_EVENT, onPomo); clearTimeout(reactTimer.current); };
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+  const poke = () => show({ mood: 'cheer', line: pokeLine(pokes.current++) }, 2600);
   const hello = firstRun ? '' : greeting(period, state.days[today]?.mood, today);
   let mood: GiriMood = 'happy', line: string;
   if (firstRun) line = 'Hế lô, mình là Giri nè! Thêm việc đầu tiên đi rồi tụi mình trồng cây nha.';
@@ -124,10 +153,15 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
   else if (!pr.total) { mood = 'sleepy'; line = 'Nay chưa có việc nào hết. Bồ định làm gì nè?'; }
   else if (!pr.done) line = 'Có ' + pr.total + ' việc đang chờ nè. Xong hết là có cây mới liền!';
   else line = 'Xong ' + pr.done + ' việc rồi á. Còn ' + left + ' việc nữa là trồng được cây!';
+  const focusing = pomo?.phase === 'focus' && pomo.endsAt !== null;
+  if (period === 'late' && mood === 'happy') mood = 'sleepy';                       // khuya rồi: Giri ngủ gật
   if (pulse.mood === 'munch') mood = 'munch';
   else if (pulse.mood === 'cheer' && mood !== 'sad') mood = 'cheer';
+  const said = react ? react.line : focusing && !firstRun ? focusLine(pomo.taskId) : hello;
+  if (react && !pulse.mood) mood = react.mood;
+  const hat = period === 'noon';                                                   // trưa nắng: đội nón lá
 
-  const giri = useMemo(() => Giri.mascot(mood, 150), [mood]);
+  const giri = useMemo(() => Giri.mascot(mood, 150, { hat }), [mood, hat]);
   const plant = useMemo(() => Giri.plant(stage, kind, 190), [stage, kind]);
   const plantEl = useRef<HTMLSpanElement>(null), lastStage = useRef(-1);
   useLayoutEffect(() => {
@@ -137,9 +171,9 @@ function Hero({ state, today, pulse }: { state: State; today: string; pulse: Pul
   useEffect(() => { if (pulse.rain) Giri.rain(plantEl.current); }, [pulse.rain]);
   return (
     <div className="mk-hero">
-      <p className="gg-bubble mk-bubble-down"><span className="gg-tag">Giri</span>{hello && <span className="mk-hello" id="giri-hello">{hello}</span>}<span id="giri-line">{line}</span></p>
+      <p className="gg-bubble mk-bubble-down"><span className="gg-tag">Giri</span>{said && <span className="mk-hello" id="giri-hello" aria-live="polite">{said}</span>}<span id="giri-line">{line}</span></p>
       <div className="mk-hero__stage">
-        <span id="giri" style={{ display: 'block' }} dangerouslySetInnerHTML={{ __html: giri }} />
+        <button className="mk-giri" id="giri" type="button" aria-label="Chọc Giri" onClick={poke} dangerouslySetInnerHTML={{ __html: giri }} />
         <span id="day-plant" ref={plantEl} style={{ display: 'block' }} dangerouslySetInnerHTML={{ __html: plant }} />
       </div>
     </div>
@@ -238,6 +272,22 @@ export default function Shell({ store, account }: { store: Store; account: Accou
     dialogs.sheet('Hôm nay trồng cây gì?', <SeedPicker kind={kind} onPick={(k) => { dialogs.close(); store.apply((s) => GG.setKind(s, today, k)); }} />);
   };
 
+  // màn chào: tự hiện một lần khi tải xong mà tài khoản chưa có gì; Cài đặt mở lại được
+  const [welcome, setWelcome] = useState(false);
+  const asked = useRef(false);
+  useEffect(() => {
+    if (asked.current || (snap.status !== 'saved' && snap.status !== 'saving')) return;
+    asked.current = true;
+    const s = snap.state;
+    if (s.projects.length || s.todos.length || s.notes.length || Object.keys(s.days).length) markWelcomed();   // người dùng cũ: khỏi hỏi
+    else if (!welcomed()) setWelcome(true);
+  }, [snap.status, snap.state]);
+  useEffect(() => {
+    const open = () => setWelcome(true);
+    window.addEventListener(WELCOME_EVENT, open);
+    return () => window.removeEventListener(WELCOME_EVENT, open);
+  }, []);
+
   const def = SCREENS[route.name];
   const waiting = snap.status === 'loading' || snap.status === 'load-error';
   let screen;
@@ -274,6 +324,7 @@ export default function Shell({ store, account }: { store: Store; account: Accou
         </main>
       </div>
       {!waiting && <Timers />}
+      {welcome && !waiting && <Welcome onClose={() => setWelcome(false)} />}
       <div className="ga-status gg" role="status" hidden={snap.status !== 'error'}>
         {snap.status === 'error' && <>
           <span className="mk-grow">{store.kind === 'supabase' ? 'Chưa lưu được lên máy chủ. Thay đổi vẫn còn trên trang này, bạn thử lưu lại nhé.' : 'Trình duyệt chưa cho lưu dữ liệu. Thay đổi vẫn còn trên trang này; vào Cài đặt để xuất JSON.'}</span>

@@ -75,7 +75,7 @@ export default function Projects() {
     const w = { id: b.id }, wi = b.work ? works.indexOf(b.work) : -1;
     const doneCount = b.list.filter((t) => t.done).length;
     const ws = { total: b.list.length, done: doneCount, status: b.list.length && doneCount === b.list.length ? 'done' : doneCount > 0 ? 'now' : 'new' };
-    const top = y, cys: { cy: number; done: boolean }[] = [];
+    const top = y, cys: { cy: number; done: boolean }[] = [], head = nodes.length;   // head: chỗ chèn nút công việc, đứng trước các việc của nó
     const todos = b.list.slice().sort((a, b2) => (a.date < b2.date ? -1 : a.date > b2.date ? 1 : 0));
     // việc đã xong nhiều thì gộp thành một lá, để nhánh không dài lê thê
     const doneList = todos.filter((t) => t.done), fold = doneList.length > 3 && !open[w.id];
@@ -104,7 +104,7 @@ export default function Projects() {
     y += ROW;
     const wy = (top + y - ROW) / 2 + 20, cls = ws.status === 'done' ? ' is-done' : ws.status === 'now' ? ' is-now' : '';
     const work = b.work;
-    nodes.push(work ? (
+    nodes.splice(head, 0, work ? (
       <button className={'mk-node mk-work gg-work' + cls} id={'work-' + w.id} key={w.id} type="button" aria-label={'Sửa công việc ' + work.name} style={at(X[1], wy - 28)} onClick={() => editWork(work, ws.total)}>
         <span className="gg-work__num">{pad2(wi + 1)}</span>
         <span className="gg-work__name">{work.name}<span className="gg-work__meta">{ws.done} / {ws.total} việc</span></span>
@@ -147,12 +147,12 @@ export default function Projects() {
       <div className="mk-mindwrap">
         <div className="mk-mind" style={{ height }}>
           <svg aria-hidden="true">{links.map((l, i) => <path className={'mk-link' + (l.done ? ' mk-link--done' : '')} d={l.d} key={i} />)}</svg>
-          {nodes}
           <div className="mk-node mk-root" id="mind-root" style={at(0, Math.max(0, ry - 64))}>
             <p className="mk-root__name">{p.name}</p>
             <span className={'gg-chip' + (ps.total && ps.done === ps.total ? ' gg-chip--leaf' : '')}>{ps.total ? ps.done + ' / ' + ps.total + ' việc · ' + ps.pct + '%' : 'Chưa có việc'}</span>
             <Progress cls="gg-progress--leaf" value={ps.pct} label={'Tiến độ của ' + p.name} />
           </div>
+          {nodes}
         </div>
       </div>
     </>

@@ -58,3 +58,27 @@ export function greeting(period: Period, mood: number | undefined, day: string):
   const more = mood && BY_MOOD[mood] ? pick(BY_MOOD[mood], day + period + mood) : pick(PLAIN[period], day + period);
   return pick(HELLO[period], day + period) + ' ' + more;
 }
+
+/* ---- phản ứng của Giri ngoài lời chào: lúc đang tập trung, vừa xong pomodoro, bị chọc, lâu ngày mới gặp ---- */
+const FOCUS = ['Suỵt… bồ đang tập trung, mình canh cho nè.', 'Mình ngồi im re nè, bồ cứ làm đi.', 'Đang vô guồng rồi đó, giữ nhịp nha!'];
+const POMO_DONE = ['Xong một pomodoro rồi, đỉnh quá trời!', 'Một trái cà chua chín rồi nè, nghỉ xíu đi!', 'Quá dữ! Đứng dậy vươn vai cái đi bồ.'];
+const POKE = ['Ê nhột nha!', 'Hehe, chọc mình chi dạ?', 'Mình đang ngắm cây mà, hú hồn!', 'Cổ mình dài chứ hong có nhột đâu nha.', 'Bấm nữa là mình nhảy cho coi nè!', 'Yêu bồ ghê á, mà làm việc đi nha.'];
+
+export const focusLine = (seed: string) => pick(FOCUS, seed);
+export const pomoDoneLine = (seed: string) => pick(POMO_DONE, seed);
+export const pokeLine = (n: number) => POKE[((n % POKE.length) + POKE.length) % POKE.length];
+
+/** Số ngày giữa hai ngày dạng YYYY-MM-DD (b sau a thì dương). */
+export function daysBetween(a: string, b: string): number {
+  const d = (s: string) => { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); };
+  return Math.round((d(b) - d(a)) / 86400000);
+}
+/** Câu Giri nói khi lâu rồi mới gặp lại (vắng từ 3 ngày trở lên); chưa đủ lâu thì trả về chuỗi rỗng. */
+export function missedLine(lastVisit: string | null, today: string): string {
+  if (!lastVisit || !/^\d{4}-\d{2}-\d{2}$/.test(lastVisit)) return '';
+  const n = daysBetween(lastVisit, today);
+  if (n < 3) return '';
+  if (n >= 14) return 'Trời ơi ' + n + ' ngày rồi mới gặp! Mình tưởng bồ quên mình luôn rồi á.';
+  if (n >= 7) return 'Cả tuần hong thấy bồ đâu hết. Mình nhớ muốn xỉu luôn nè.';
+  return 'Mấy bữa nay bồ đi đâu dạ? ' + n + ' ngày rồi đó, mình nhớ ghê.';
+}

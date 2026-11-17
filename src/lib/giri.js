@@ -10,14 +10,16 @@
   ];
 
   /* mascot(mood, size): Giri as nested CSS blocks. The neck is five nested segments, so it bends like a noodle. */
-  function mascot(mood, size) {
+  /* mascot(mood, size, opts): opts.hat = true thì Giri đội nón lá (buổi trưa nắng). */
+  function mascot(mood, size, opts) {
     mood = MOODS[mood] ? mood : 'happy';
     size = size || 120;
     var s = function (cls, inner) { return '<span class="gg-giri__' + cls + '">' + (inner || '') + '</span>'; };
     var eye = { happy: 'eye', cheer: 'eye gg-giri__eye--up', sleepy: 'eye', sad: 'eye gg-giri__eye--open', munch: 'eye gg-giri__eye--open' }[mood];
     var mouth = { happy: 'mouth', cheer: 'mouth gg-giri__mouth--open', sleepy: 'mouth gg-giri__mouth--flat', sad: 'mouth gg-giri__mouth--down', munch: 'mouth gg-giri__mouth--chew' }[mood];
     var fx = { sleepy: s('z', 'z') + s('z gg-giri__z--2', 'z'), sad: s('tear'), munch: s('leaf') }[mood] || '';
-    var inner = s('ear') + s('head', s('horn gg-giri__horn--1') + s('horn gg-giri__horn--2') + s(eye) + s('blush') + s('nose') + s(mouth) + fx);
+    var hat = opts && opts.hat ? s('hat', s('hatstrap')) : '';
+    var inner = s('ear') + s('head', s('horn gg-giri__horn--1') + s('horn gg-giri__horn--2') + s(eye) + s('blush') + s('nose') + s(mouth) + fx + hat);
     for (var i = 5; i >= 1; i--) {
       inner = '<span class="gg-giri__seg' + (i % 2 ? '' : ' gg-giri__seg--alt') + (i === 1 ? ' gg-giri__seg--root' : '') +
         '" style="animation-delay:calc(var(--speed) * -' + (0.12 * i).toFixed(2) + ')">' + inner + '</span>';

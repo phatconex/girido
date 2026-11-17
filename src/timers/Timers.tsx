@@ -32,6 +32,7 @@ export default function Timers() {
       const pr = prefs.get();
       if (done.phase === 'focus') {
         applyRef.current((s) => GG.addPomo(s, done.taskId));
+        window.dispatchEvent(new Event('girido:pomo-done'));                       // Giri ăn mừng (xem Shell)
         pomodoro.startBreak(pr.breakMin);
         if (pr.sound) chime('focus', pr.soundPomo, pr.volume);
         notify('Xong một pomodoro', 'Nghỉ ' + pr.breakMin + ' phút nhé. Việc: ' + done.label);
@@ -75,6 +76,7 @@ export default function Timers() {
 
   // đổi thời lượng tập trung cho việc đang chạy: đếm lại từ đầu, và nhớ số phút này cho việc đó
   const [draft, setDraft] = useState<string | null>(null);
+  const [more, setMore] = useState(false);          // màn hình hẹp: phần đổi thời lượng chỉ hiện khi bấm vào đồng hồ
   const setLength = (minutes: number) => {
     if (!pomo || !Number.isFinite(minutes)) return;
     const m = Math.min(LIMITS.focusMin[1], Math.max(LIMITS.focusMin[0], Math.round(minutes)));
@@ -96,14 +98,14 @@ export default function Timers() {
         </div>
       ))}
       {pomo && (
-        <section className={'mk-pomo mk-pomo--' + pomo.phase} aria-label="Pomodoro">
+        <section className={'mk-pomo mk-pomo--' + pomo.phase + (more ? ' is-more' : '')} aria-label="Pomodoro">
           <div className="mk-pomo__top">
             <span className="mk-pomo__phase">{pomo.phase === 'focus' ? 'Tập trung' : 'Nghỉ ngơi'}{pomo.endsAt === null ? ' · tạm dừng' : ''}</span>
             <button className="mk-pomo__x" id="pomo-stop" type="button" aria-label="Dừng pomodoro" onClick={() => { stopSound(); pomodoro.stop(); }}><Icon name="close" /></button>
           </div>
           <p className="mk-pomo__task">{pomo.label}</p>
           <div className="mk-pomo__row">
-            <p className="mk-pomo__time" role="timer" aria-live="off">{clock(left)}</p>
+            <button className="mk-pomo__time" id="pomo-time" type="button" role="timer" aria-live="off" aria-expanded={more} title="Đổi thời lượng" onClick={() => setMore((v) => !v)}>{clock(left)}</button>
             {pomo.endsAt === null
               ? <button className="gg-btn mk-mini" id="pomo-resume" type="button" onClick={() => pomodoro.resume()}>Chạy tiếp</button>
               : <button className="gg-btn gg-btn--ghost mk-mini" id="pomo-pause" type="button" onClick={() => pomodoro.pause()}>Tạm dừng</button>}

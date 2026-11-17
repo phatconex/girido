@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import GG from '../lib/logic';
 import { useApp } from '../app-context';
 import { useDialogs } from '../dialogs';
+import { WELCOME_EVENT } from '../Welcome';
 import { prefs, usePrefs, LIMITS, type Prefs } from '../timers/prefs';
 import { chime, unlock, askNotify, stopSound, STYLES, FILES, type Chime } from '../timers/sound';
 import { Picker, type Option } from '../WorkPicker';
@@ -106,6 +107,14 @@ export default function Settings() {
           </div>
         </section>
       )}
+
+      <section className="mk-sec">
+        <p className="mk-group">Hướng dẫn</p>
+        <div className="mk-set">
+          <p className="mk-set__text"><b>Giri giới thiệu lại</b>Bốn bước ngắn về việc, cây và khu vườn</p>
+          <button className="gg-btn gg-btn--ghost mk-mini" id="open-welcome" type="button" onClick={() => window.dispatchEvent(new Event(WELCOME_EVENT))}>Xem hướng dẫn</button>
+        </div>
+      </section>
 
       <section className="mk-sec">
         <p className="mk-group">Phong cảnh</p>
