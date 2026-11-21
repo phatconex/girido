@@ -231,7 +231,7 @@ export default function Shell({ store, account }: { store: Store; account: Accou
       if (was && !planted()) dialogs.toast('Hôm nay còn việc chưa xong nên cây quay về chờ. Xong hết rồi trồng lại nhé.');
     };
     const editTodo = (t: Todo) => {
-      void dialogs.askTodo({ title: 'Sửa việc', text: t.text, date: t.date, danger: 'Xóa việc' }).then((r) => {
+      void dialogs.askTodo({ title: 'Sửa việc', text: t.text, date: t.date, danger: 'Xóa việc', noDate: !!(t.workId || t.projectId), today: todayRef.current }).then((r) => {
         if (!r) return;
         if ('danger' in r) { apply((s) => GG.deleteTodo(s, t.id)); dialogs.toast('Đã xóa việc'); return; }
         apply((s) => GG.updateTodo(s, t.id, { text: r.text, date: r.date }));

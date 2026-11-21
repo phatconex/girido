@@ -2,7 +2,7 @@ export interface Work { id: string; name: string; order: number }
 export interface Project { id: string; name: string; createdAt: string; works: Work[] }
 export interface Sub { id: string; text: string; done: boolean }
 /** `workId` rỗng: việc không nằm trong công việc nào. Khi đó có `projectId` là việc nằm thẳng trong project, không có là việc lẻ.
-    `pomos`: số pomodoro đã xong. `subs`: các mục con. */
+    `date` rỗng: việc trong project chưa hẹn ngày (việc lẻ thì luôn có ngày). `pomos`: số pomodoro đã xong. `subs`: các mục con. */
 export interface Todo { id: string; workId: string; projectId?: string; text: string; date: string; done: boolean; doneAt: string | null; pomos?: number; subs?: Sub[] }
 export interface Note { id: string; text: string; createdAt: string; updatedAt: string; pinned?: boolean }
 /** `slot`: ô trên khu đất của tháng mà cây ngày này đứng (0 đến SLOTS - 1); không có thì app tự xếp. */

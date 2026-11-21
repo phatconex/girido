@@ -4,7 +4,8 @@ import { IconBtn, onEnter } from './ui';
 
 export interface ConfirmOpts { title: string; body?: string; yes?: string; no?: string; danger?: boolean }
 export interface AskOpts { title: string; value?: string; placeholder?: string; yes?: string; danger?: string; max?: number }
-export interface AskTodoOpts { title: string; text?: string; date: string; yes?: string; danger?: string }
+/** `noDate`: cho phép để việc chưa hẹn ngày (kết quả trả về date rỗng). `today` là ngày điền sẵn khi người dùng bỏ dấu "chưa hẹn". */
+export interface AskTodoOpts { title: string; text?: string; date: string; yes?: string; danger?: string; noDate?: boolean; today?: string }
 export type Danger = { danger: true };
 
 export interface Dialogs {
@@ -67,17 +68,24 @@ function AskBody({ o, done }: { o: AskOpts; done: (v: string | Danger) => void }
 
 function AskTodoBody({ o, done }: { o: AskTodoOpts; done: (v: { text: string; date: string } | Danger) => void }) {
   const [text, setText] = useState(o.text || '');
-  const [date, setDate] = useState(o.date);
+  const [date, setDate] = useState(o.date || o.today || '');
+  const [open, setOpen] = useState(!!o.noDate && !o.date);            // true: việc này chưa hẹn ngày
   const input = useRef<HTMLInputElement>(null);
-  const save = () => { if (!text.trim()) { input.current?.focus(); return; } done({ text, date: date || o.date }); };
+  const save = () => { if (!text.trim()) { input.current?.focus(); return; } done({ text, date: open ? '' : date || o.date || o.today || '' }); };
   return (
     <div className="ga-stack ga-stack--tight">
       <label className="mk-field">Nội dung
         <input className="gg-input" id="todo-text" type="text" ref={input} placeholder="Việc cần làm" maxLength={300} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onEnter(save)} />
       </label>
       <label className="mk-field">Ngày làm
-        <input className="gg-input" id="todo-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input className="gg-input" id="todo-date" type="date" value={open ? '' : date} disabled={open} onChange={(e) => setDate(e.target.value)} />
       </label>
+      {o.noDate && (
+        <label className="mk-checkline">
+          <input type="checkbox" className="gg-check" id="todo-nodate" checked={open} onChange={(e) => setOpen(e.target.checked)} />
+          <span><b>Chưa hẹn ngày</b>Việc nằm trong project, khi nào làm thì đặt ngày sau.</span>
+        </label>
+      )}
       <div className="ga-dialog__actions">
         {o.danger && <button className="gg-btn gg-btn--clay" id="todo-danger" type="button" onClick={() => done({ danger: true })}>{o.danger}</button>}
         <button className="gg-btn" id="todo-save" type="button" onClick={save}>{o.yes || 'Lưu'}</button>

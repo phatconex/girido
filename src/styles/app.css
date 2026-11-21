@@ -475,3 +475,10 @@ button.mk-pomo__time { padding: 0; border: 0; background: none; color: inherit; 
 @media (max-width: 640px) { .mk-work__title { -webkit-line-clamp: 4; } }
 /* ô việc trong mindmap dài theo chỗ trống của bảng (từ 380 tới 620px), để việc tên dài đỡ bị cắt */
 @media (min-width: 641px) { .mk-mind .mk-leaf:not(.mk-leaf--add) { width: max(380px, min(620px, calc(100% - 590px))); } }
+
+/* việc chưa hẹn ngày */
+.mk-chip--open { background: none; border: 2px dashed var(--line-strong); color: var(--ink-soft); }
+.mk-checkline { display: flex; align-items: center; gap: var(--space-3); cursor: pointer; }
+.mk-checkline span { font: 600 13px/18px var(--font-body); color: var(--ink-soft); }
+.mk-checkline b { display: block; font: 800 15px/20px var(--font-body); color: var(--ink); }
+.gg-input:disabled { opacity: 0.5; }

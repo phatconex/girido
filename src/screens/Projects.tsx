@@ -58,7 +58,7 @@ export default function Projects() {
   };
   // work có giá trị: thêm vào công việc đó; không có: thêm thẳng vào project (việc chung)
   const addLeaf = (w?: Work) => {
-    void dialogs.askTodo({ title: 'Thêm việc cho "' + (w ? w.name : p.name) + '"', date: today, yes: 'Thêm việc' }).then((r) => {
+    void dialogs.askTodo({ title: 'Thêm việc cho "' + (w ? w.name : p.name) + '"', date: today, yes: 'Thêm việc', noDate: true, today }).then((r) => {
       if (r && !('danger' in r)) apply((s) => GG.addTodo(s, w ? { workId: w.id, text: r.text, date: r.date } : { workId: '', projectId: p.id, text: r.text, date: r.date }));
     });
   };
@@ -78,7 +78,9 @@ export default function Projects() {
     const doneCount = b.list.filter((t) => t.done).length;
     const ws = { total: b.list.length, done: doneCount, status: b.list.length && doneCount === b.list.length ? 'done' : doneCount > 0 ? 'now' : 'new' };
     const top = y, cys: { cy: number; done: boolean }[] = [], head = nodes.length;   // head: chỗ chèn nút công việc, đứng trước các việc của nó
-    const todos = b.list.slice().sort((a, b2) => (a.date < b2.date ? -1 : a.date > b2.date ? 1 : 0));
+    // xếp theo ngày, việc chưa hẹn ngày nằm cuối
+    const when = (t: Todo) => t.date || '9999';
+    const todos = b.list.slice().sort((a, b2) => (when(a) < when(b2) ? -1 : when(a) > when(b2) ? 1 : 0));
     // việc đã xong nhiều thì gộp thành một lá, để nhánh không dài lê thê
     const doneList = todos.filter((t) => t.done), fold = doneList.length > 3 && !open[w.id];
     // số dòng lá của nhánh này (gộp việc đã xong, từng việc, nút thêm việc); nhánh ít lá thì các lá nằm giữa khoảng cao tối thiểu
@@ -96,12 +98,12 @@ export default function Projects() {
       cys.push({ cy: y + 20, done: true }); y += ROW;
     }
     (fold ? todos.filter((t) => !t.done) : todos).forEach((t) => {
-      const late = !t.done && t.date < today, isNow = t.date === today;
+      const late = !t.done && !!t.date && t.date < today, isNow = t.date === today;
       nodes.push(
         <div className={'mk-node mk-leaf' + (t.done ? ' is-done' : '')} key={t.id} style={at(X[2], y)}>
           <button className="mk-leaf__dot" id={'leaf-' + t.id} type="button" aria-pressed={t.done} aria-label={(t.done ? 'Bỏ tick: ' : 'Xong: ') + t.text} onClick={(e) => tick(t, e.currentTarget)}>{t.done ? '✓' : ''}</button>
           <button className="mk-leaf__text" id={'leaf-edit-' + t.id} type="button" aria-label={'Sửa: ' + t.text} title={t.text} onClick={() => editTodo(t)}>{t.text}{t.subs?.length ? ' (' + t.subs.filter((s) => s.done).length + '/' + t.subs.length + ')' : ''}</button>
-          <span className={'gg-chip' + (isNow ? ' gg-chip--sun' : late ? ' gg-chip--ember' : '')}>{isNow ? 'Hôm nay' : (late ? 'Trễ ' : '') + fmtShort(t.date)}</span>
+          <span className={'gg-chip' + (isNow ? ' gg-chip--sun' : late ? ' gg-chip--ember' : !t.date ? ' mk-chip--open' : '')}>{isNow ? 'Hôm nay' : !t.date ? 'Chưa hẹn' : (late ? 'Trễ ' : '') + fmtShort(t.date)}</span>
         </div>,
       );
       cys.push({ cy: y + 20, done: t.done }); y += ROW;

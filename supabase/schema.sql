@@ -31,7 +31,7 @@ create table if not exists public.todos (
   work_id    text,                    -- null: việc không nằm trong công việc nào
   project_id text,                    -- chỉ dùng khi work_id null: việc nằm thẳng trong project; cả hai null là việc lẻ
   text       text        not null check (length(trim(text)) > 0),
-  date       date        not null,
+  date       date,                    -- null: việc trong project chưa hẹn ngày; việc lẻ thì luôn có ngày
   done       boolean     not null default false,
   done_at    timestamptz,
   pomos      integer     not null default 0 check (pomos >= 0),
@@ -56,6 +56,10 @@ create table if not exists public.days (
 -- Project đã tạo bảng từ bản trước thì chỉnh ở đây.
 alter table public.todos add column if not exists pomos integer not null default 0 check (pomos >= 0);
 alter table public.todos alter column work_id drop not null;
+alter table public.todos alter column date drop not null;   -- việc trong project có thể chưa hẹn ngày
+-- việc lẻ (không thuộc project nào) thì phải có ngày, vì nó chỉ hiện ở màn Hôm nay theo ngày
+alter table public.todos drop constraint if exists todos_loose_has_date;
+alter table public.todos add constraint todos_loose_has_date check (date is not null or work_id is not null or project_id is not null);
 alter table public.days add column if not exists slot smallint check (slot between 0 and 35);
 alter table public.todos add column if not exists project_id text;
 alter table public.todos add column if not exists subs jsonb not null default '[]'::jsonb;

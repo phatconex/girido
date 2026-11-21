@@ -5,7 +5,7 @@ import type { State, Project, Todo, Day, Sub, Note } from '../lib/logic';
 export interface ProjectRow { id: string; name: string; created_on: string; pos: number }
 export interface WorkRow { id: string; project_id: string; name: string; sort: number }
 /** `work_id` null: việc không nằm trong công việc nào; khi đó `project_id` có giá trị là việc nằm thẳng trong project, null là việc lẻ. */
-export interface TodoRow { id: string; work_id: string | null; project_id: string | null; text: string; date: string; done: boolean; done_at: string | null; pomos: number; subs: Sub[]; pos: number }
+export interface TodoRow { id: string; work_id: string | null; project_id: string | null; text: string; date: string | null; done: boolean; done_at: string | null; pomos: number; subs: Sub[]; pos: number }
 export interface NoteRow { id: string; body: string; pinned: boolean; noted_at: string; edited_at: string; pos: number }
 export interface DayRow { date: string; kind: string | null; planted: boolean; mood: number | null; slot: number | null }
 export interface Rows { projects: ProjectRow[]; works: WorkRow[]; todos: TodoRow[]; days: DayRow[]; notes: NoteRow[] }
@@ -20,7 +20,7 @@ export function toRows(st: State): Rows {
     p.works.forEach((w) => works.push({ id: w.id, project_id: p.id, name: w.name, sort: w.order }));
   });
   const todos = st.todos.map((t: Todo, i): TodoRow => ({
-    id: t.id, work_id: t.workId || null, project_id: (!t.workId && t.projectId) || null, text: t.text, date: t.date, done: t.done, done_at: t.doneAt,
+    id: t.id, work_id: t.workId || null, project_id: (!t.workId && t.projectId) || null, text: t.text, date: t.date || null, done: t.done, done_at: t.doneAt,
     pomos: t.pomos || 0, subs: (t.subs || []).map((s) => ({ id: s.id, text: s.text, done: s.done })), pos: i,
   }));
   const days = Object.keys(st.days).sort().map((date): DayRow => {
@@ -41,8 +41,9 @@ export function fromRows(rows: Rows): State {
     works: (byProject.get(p.id) || []).slice().sort((a, b) => a.sort - b.sort).map((w) => ({ id: w.id, name: w.name, order: w.sort })),
   }));
   const projectIds = new Set(rows.projects.map((p) => p.id));
-  const todos = rows.todos.filter((t) => (t.work_id == null ? t.project_id == null || projectIds.has(t.project_id) : workIds.has(t.work_id))).map((t): Todo => {
-    const todo: Todo = { id: t.id, workId: t.work_id || '', text: t.text, date: t.date, done: t.done, doneAt: t.done_at };
+  // việc lẻ mà không có ngày thì không hiện được ở đâu: bỏ qua (cơ sở dữ liệu cũng đã chặn trường hợp này)
+  const todos = rows.todos.filter((t) => t.date || t.work_id || t.project_id).filter((t) => (t.work_id == null ? t.project_id == null || projectIds.has(t.project_id) : workIds.has(t.work_id))).map((t): Todo => {
+    const todo: Todo = { id: t.id, workId: t.work_id || '', text: t.text, date: t.date || '', done: t.done, doneAt: t.done_at };
     if (!t.work_id && t.project_id) todo.projectId = t.project_id;
     if (t.pomos) todo.pomos = t.pomos;
     if (Array.isArray(t.subs) && t.subs.length) todo.subs = t.subs.map((s) => ({ id: s.id, text: s.text, done: !!s.done }));
